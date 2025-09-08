@@ -6,10 +6,12 @@ export default function ControlsPanel() {
 	const setPrimary = useLabStore(s => s.setPrimary);
 	const setSecondary = useLabStore(s => s.setSecondary);
 	const setNoiseOpacity = useLabStore(s => s.setNoiseOpacity);
+	const setLutSrc = useLabStore(s => s.setLutSrc!);
 
-	function onFile(e: React.ChangeEvent<HTMLInputElement>, which: 'primary'|'secondary') {
+	function onFile(e: React.ChangeEvent<HTMLInputElement>, which: 'primary'|'secondary'|'lut') {
 		const f = e.target.files?.[0]; if (!f) return;
-		const url = URL.createObjectURL(f); which==='primary' ? setPrimary(url) : setSecondary(url);
+		const url = URL.createObjectURL(f);
+		if (which==='primary') setPrimary(url); else if (which==='secondary') setSecondary(url); else setLutSrc(url);
 	}
 
 	return (
@@ -23,6 +25,10 @@ export default function ControlsPanel() {
 				<label className="block text-sm">
 					<span className="text-white/70">Image B</span>
 					<input type="file" accept="image/*" onChange={(e)=>onFile(e,'secondary')} className="block mt-1 text-sm" />
+				</label>
+				<label className="block text-sm">
+					<span className="text-white/70">LUT (PNG)</span>
+					<input type="file" accept="image/png" onChange={(e)=>onFile(e,'lut')} className="block mt-1 text-sm" />
 				</label>
 				{Object.entries(effect.params).filter(([k])=>!['bloomStrength','lutAmount','samples','zoomStrength'].includes(k) || effect.id==='halftone').map(([k, v]) => (
 					<label key={k} className="block text-sm">
