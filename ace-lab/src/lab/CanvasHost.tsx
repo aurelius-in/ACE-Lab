@@ -8,6 +8,8 @@ import CROSS_SRC from '../shaders/blocks/crosszoom.frag?raw';
 // @ts-ignore
 import TEXTWAVE_SRC from '../shaders/blocks/textwave.frag?raw';
 // @ts-ignore
+import POST_SRC from '../shaders/blocks/post.frag?raw';
+// @ts-ignore
 import VERT_SRC from '../shaders/fullscreen.vert?raw';
 
 export default function CanvasHost() {
@@ -35,6 +37,9 @@ export default function CanvasHost() {
 		const fsText = compile(gl.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${TEXTWAVE_SRC}`);
 		const textProg = gl.createProgram()!; gl.attachShader(textProg, vs); gl.attachShader(textProg, fsText); gl.linkProgram(textProg);
 
+		const fsPost = compile(gl.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${POST_SRC}`);
+		const postProg = gl.createProgram()!; gl.attachShader(postProg, vs); gl.attachShader(postProg, fsPost); gl.linkProgram(postProg);
+
 		const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
 		const quad = new Float32Array([-1,-1, 3,-1, -1,3]);
 		const vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vbo); gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
@@ -46,11 +51,16 @@ export default function CanvasHost() {
 		upload(media.primary?.src || '/ace-lab.webp', tex0);
 		if (media.secondary) upload(media.secondary.src, tex1);
 
+		// offscreen framebuffer for post
+		const rtTex = makeTex();
+		const fbo = gl.createFramebuffer();
+		function resizeRT(){ gl.bindTexture(gl.TEXTURE_2D, rtTex); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA, canvas.width, canvas.height,0,gl.RGBA,gl.UNSIGNED_BYTE,null); gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, rtTex, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, null); }
+
 		const textCanvas = document.createElement('canvas'); textCanvas.width = 1024; textCanvas.height = 256; const textCtx = textCanvas.getContext('2d')!;
 		function redrawText(t: { value: string }){ textCtx.clearRect(0,0,textCanvas.width,textCanvas.height); textCtx.fillStyle = 'white'; textCtx.font = '700 120px Poppins'; textCtx.textBaseline = 'middle'; textCtx.fillText(t.value || '', 32, textCanvas.height/2); gl.bindTexture(gl.TEXTURE_2D, textTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textCanvas);} if (text.enabled) redrawText(text);
 
 		let raf = 0; const times: number[] = []; let last = performance.now(); let running = true;
-		function resize() { const dpr = Math.min(window.devicePixelRatio||1,2); const w = canvas.clientWidth*dpr; const h = canvas.clientHeight*dpr; if (canvas.width!==w||canvas.height!==h) { canvas.width=w; canvas.height=h; gl.viewport(0,0,w,h);} }
+		function resize() { const dpr = Math.min(window.devicePixelRatio||1,2); const w = canvas.clientWidth*dpr; const h = canvas.clientHeight*dpr; if (canvas.width!==w||canvas.height!==h) { canvas.width=w; canvas.height=h; gl.viewport(0,0,w,h); resizeRT(); } }
 		function mixAt(t: number){ const keys = timeline.keyframes; if(keys.length===0) return 0; let prev = keys[0]; for (let i=1;i<keys.length;i++){ const cur = keys[i]; if (t<=cur.t){ const span = cur.t - prev.t || 1; const local = (t - prev.t)/span; return prev.mix*(1-local)+cur.mix*local; } prev = cur; } return keys[keys.length-1].mix; }
 		const loop = () => {
 			if (!running) { raf = requestAnimationFrame(loop); return; }
@@ -59,6 +69,8 @@ export default function CanvasHost() {
 			if (play.playing) { const nt = (play.t + dt) % 1; setPlayhead(nt); }
 			const mix = media.secondary ? mixAt(play.t) : 1.0;
 
+			// base pass to rt
+			gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
 			gl.useProgram(baseProg);
 			gl.uniform2f(gl.getUniformLocation(baseProg, 'uRes'), canvas.width, canvas.height);
 			gl.uniform1f(gl.getUniformLocation(baseProg, 'uTime'), now/1000);
@@ -68,7 +80,19 @@ export default function CanvasHost() {
 			const p = effect.params as any; let zoomStrength = p.zoomStrength ?? 0.8; let samples = Math.max(1, Math.min(32, Math.floor(p.samples ?? 16))); if (fps < 30 && media.secondary) { if (samples > 8) { samples = 8; if (!tip) { setTip('Performance: reduced samples to keep 30fps'); setTimeout(()=>setTip(null), 2000); } } } const locP = gl.getUniformLocation(baseProg,'uParams'); if(locP) gl.uniform4f(locP, p.dotScale ?? zoomStrength, p.angleRad ?? samples, p.contrast ?? 1, p.invert01 ?? 0);
 			gl.drawArrays(gl.TRIANGLES, 0, 3);
 
+			// text on rt
 			if (text.enabled && text.value) { redrawText(text); gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.useProgram(textProg); gl.uniform2f(gl.getUniformLocation(textProg, 'uRes'), canvas.width, canvas.height); gl.uniform1f(gl.getUniformLocation(textProg, 'uTime'), now/1000); const tp = text.params; gl.uniform4f(gl.getUniformLocation(textProg,'uParams'), tp.amp, tp.freq, tp.speed, tp.outlinePx); gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, textTex); const lt = gl.getUniformLocation(textProg,'uTextTex'); if (lt) gl.uniform1i(lt,2); gl.uniform1f(gl.getUniformLocation(textProg,'uMix'), 1.0); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disable(gl.BLEND); }
+
+			// post to screen
+			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+			gl.useProgram(postProg);
+			gl.uniform2f(gl.getUniformLocation(postProg, 'uRes'), canvas.width, canvas.height);
+			gl.uniform1f(gl.getUniformLocation(postProg, 'uTime'), now/1000);
+			gl.uniform1f(gl.getUniformLocation(postProg, 'uMix'), 1.0);
+			gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, rtTex); const p0 = gl.getUniformLocation(postProg,'uTex0'); if(p0) gl.uniform1i(p0,0);
+			// bloomStrength, radiusPx, lutAmount
+			gl.uniform4f(gl.getUniformLocation(postProg,'uParams'), 0.25, 2.0, 0.2, 0.0);
+			gl.drawArrays(gl.TRIANGLES, 0, 3);
 
 			times.push(now); if(times.length>120) times.shift(); const f = Math.round(fpsFromSamples(times)); setFpsLocal(f); publishFps(f);
 			raf = requestAnimationFrame(loop);
