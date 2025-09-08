@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 const tabs = ['Lab', 'Agents', 'Library'] as const;
 type TabKey = typeof tabs[number];
 
-export function AppShell({ children }: PropsWithChildren) {
+export function AppShell({ children, rightSlot }: PropsWithChildren & { rightSlot?: React.ReactNode }) {
 	const [active, setActive] = useState<TabKey>('Lab');
 
 	return (
@@ -39,7 +39,7 @@ export function AppShell({ children }: PropsWithChildren) {
 				<section className="lg:col-span-8 relative card-dark p-2">
 					{children}
 				</section>
-				<aside className="lg:col-span-4 card-dark p-4">Right panel</aside>
+				<aside className="lg:col-span-4 card-dark p-4">{rightSlot}</aside>
 			</main>
 		</div>
 	);

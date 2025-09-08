@@ -7,7 +7,7 @@ import TimelinePanel from './lab/TimelinePanel'
 
 function App() {
 	return (
-		<AppShell>
+		<AppShell rightSlot={<ControlsPanel />}>
 			<div className="aspect-video w-full grid place-items-center rounded-2xl border border-white/10 overflow-hidden">
 				<CanvasHost />
 			</div>
