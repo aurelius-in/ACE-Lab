@@ -4,6 +4,7 @@ import AppShell, { TabKey } from './app/AppShell'
 import CanvasHost from './lab/CanvasHost'
 import RightPanelTabs from './lab/RightPanelTabs'
 import TimelinePanel from './lab/TimelinePanel'
+import LibraryPanel from './lab/LibraryPanel'
 import { captureCanvasWebm } from './utils/media'
 import { useState } from 'react'
 import { useLabStore } from './store/useLabStore'
@@ -12,16 +13,15 @@ function App() {
 	const [tab, setTab] = useState<TabKey>('Lab')
 	const runAgent = useLabStore(s => s.runAgent)
 	const check = useLabStore(s => s.exportPolicyCheck)
+	const device = useLabStore(s => s.device)
+	const setDevice = useLabStore(s => s.setDevice)
 
 	async function handleExport() {
 		const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
 		if (!canvas) return alert('Nothing to export')
-		const { allowed, message, fix } = check(canvas.width, canvas.height)
+		const { allowed, message } = check(canvas.width, canvas.height)
 		if (!allowed) {
-			if (confirm(`${message}. Apply fix?`)) {
-				const f = fix?.({ width: canvas.width, height: canvas.height })
-				// In this iteration we just proceed to record; real resize would render offscreen
-			}
+			alert(message)
 			return
 		}
 		const blob = await captureCanvasWebm(canvas, 3)
@@ -42,12 +42,14 @@ function App() {
 
 	return (
 		<AppShell
-			rightSlot={<RightPanelTabs />}
+			rightSlot={tab==='Library' ? <LibraryPanel/> : <RightPanelTabs />}
 			onExport={handleExport}
 			onRecord3={() => handleRecord(3)}
 			onRecord6={() => handleRecord(6)}
 			activeTab={tab}
 			onTabChange={setTab}
+			device={device}
+			onDeviceChange={setDevice}
 		>
 			{tab === 'Lab' && (
 				<>
@@ -64,7 +66,7 @@ function App() {
 				<div className="p-4">Agents view placeholder</div>
 			)}
 			{tab === 'Library' && (
-				<div className="p-4">Library placeholder</div>
+				<div className="p-4">Manage loaded media on the right</div>
 			)}
 		</AppShell>
 	)
