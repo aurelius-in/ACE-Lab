@@ -35,22 +35,33 @@ export async function captureScaledWebmFromCanvas(source: HTMLCanvasElement, tar
 	const chunks: Blob[] = [];
 	recorder.ondataavailable = (e) => chunks.push(e.data);
 	recorder.start();
-	let running = true;
 	const start = performance.now();
 	function draw() {
-		if (!running) return;
 		ctx.clearRect(0,0,w,h);
 		ctx.drawImage(source, 0, 0, w, h);
-		if (performance.now() - start < seconds * 1000) {
-			requestAnimationFrame(draw);
-		}
+		if (performance.now() - start < seconds * 1000) requestAnimationFrame(draw);
 	}
 	draw();
 	await new Promise((r) => setTimeout(r, seconds * 1000));
 	recorder.stop();
 	await new Promise((r) => (recorder.onstop = () => r(null)));
-	running = false;
 	return new Blob(chunks, { type: 'video/webm' });
+}
+
+export async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+	return new Promise((resolve) => canvas.toBlob((b) => resolve(b as Blob), 'image/png'));
+}
+
+export function downloadBlob(filename: string, blob: Blob) {
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url; a.download = filename; a.click();
+	URL.revokeObjectURL(url);
+}
+
+export function downloadJson(filename: string, data: unknown) {
+	const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+	downloadBlob(filename, blob);
 }
 
 

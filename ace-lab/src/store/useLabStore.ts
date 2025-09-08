@@ -6,6 +6,13 @@ import { measureFps } from '../utils/perf';
 export type TexSource = { kind: 'image'|'video'; src: string };
 export type Preset = { id: string; name: string; params: Record<string, number> };
 
+export type StylePack = {
+	palette: string[];
+	blocks: string[];
+	params: Record<string, number>;
+	timeline: { t: number; mix: number }[];
+};
+
 type TextParams = { amp: number; freq: number; speed: number; outlinePx: number };
 
 type LabState = {
@@ -39,6 +46,8 @@ type LabState = {
 	setExportSize: (w?: number, h?: number) => void;
 	setPlayhead: (t: number) => void;
 	togglePlay: () => void;
+	buildStylePack: () => StylePack;
+	applyStylePack: (sp: StylePack) => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -114,6 +123,11 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setExportSize: (w, h) => set(() => ({ exportSettings: { width: w, height: h } })),
 	setPlayhead: (t) => set(() => ({ play: { ...get().play, t: Math.max(0, Math.min(1, t)) } })),
 	togglePlay: () => set(() => ({ play: { ...get().play, playing: !get().play.playing } })),
+	buildStylePack: () => {
+		const s = get();
+		return { palette: ['#6E00FF', '#A83CF0', '#FF4BB5'], blocks: [s.effect.id], params: s.effect.params, timeline: s.timeline.keyframes };
+	},
+	applyStylePack: (sp) => set(() => ({ effect: { id: sp.blocks[0] || 'halftone', params: sp.params, mix: 0 }, timeline: { keyframes: sp.timeline } })),
 }));
 
 

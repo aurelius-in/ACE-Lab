@@ -1,14 +1,41 @@
 import { useLabStore } from '../store/useLabStore';
+import { downloadJson } from '../utils/media';
 
 export default function LibraryPanel(){
 	const media = useLabStore(s=>s.media);
 	const clearA = useLabStore(s=>s.clearPrimary);
 	const clearB = useLabStore(s=>s.clearSecondary);
+	const buildPack = useLabStore(s=>s.buildStylePack);
+	const applyPack = useLabStore(s=>s.applyStylePack);
+
+	function savePack(){
+		const sp = buildPack();
+		downloadJson('ace-style-pack.json', sp);
+	}
+	function loadPack(e: React.ChangeEvent<HTMLInputElement>){
+		const f = e.target.files?.[0]; if (!f) return;
+		const reader = new FileReader();
+		reader.onload = () => {
+			try { const sp = JSON.parse(String(reader.result)); applyPack(sp); } catch {}
+		};
+		reader.readAsText(f);
+	}
+
 	return (
-		<div className="space-y-3">
+		<div className="space-y-4">
 			<h2 className="text-lg font-semibold ace-gradient-text">Library</h2>
 			<div className="text-sm">Image A: {media.primary?.src ? <span className="text-white/80">loaded</span> : <span className="text-white/50">none</span>} {media.primary?.src && <button className="ml-2 btn-primary" onClick={clearA}>Clear</button>}</div>
 			<div className="text-sm">Image B: {media.secondary?.src ? <span className="text-white/80">loaded</span> : <span className="text-white/50">none</span>} {media.secondary?.src && <button className="ml-2 btn-primary" onClick={clearB}>Clear</button>}</div>
+			<div className="pt-2 border-t border-white/10">
+				<h3 className="text-sm text-white/70 mb-2">Style Packs</h3>
+				<div className="flex items-center gap-2">
+					<button className="btn-primary" onClick={savePack}>Save Pack</button>
+					<label className="btn-primary cursor-pointer">
+						Load Pack
+						<input type="file" accept="application/json" onChange={loadPack} className="hidden" />
+					</label>
+				</div>
+			</div>
 		</div>
 	);
 }
