@@ -1,0 +1,18 @@
+# Normalize line endings to LF for all text files in the repo
+* text eol=lf
+
+# Binary files (no EOL conversion)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.wasm binary
+
+# Keep Windows scripts with CRLF for compatibility
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+
