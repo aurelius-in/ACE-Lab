@@ -12,6 +12,7 @@ export default function RightPanelTabs(){
 	const [tab, setTab] = useState<Tab>('Effects');
 	const effectId = useLabStore(s=>s.effect.id);
 	const setEffectId = useLabStore(s=>s.setEffectId);
+	const reset = useLabStore(s=>s.resetDefaults);
 	return (
 		<div className="space-y-4">
 			<div className="flex gap-2">
@@ -29,6 +30,7 @@ export default function RightPanelTabs(){
 						</select>
 					</label>
 					<ControlsPanel/>
+					<div className="flex justify-end"><button className="btn-primary" onClick={reset}>Reset</button></div>
 				</div>
 			)}
 			{tab==='Text' && <TextControls/>}

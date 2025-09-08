@@ -49,6 +49,7 @@ type LabState = {
 	togglePlay: () => void;
 	buildStylePack: () => StylePack;
 	applyStylePack: (sp: StylePack) => void;
+	resetDefaults: () => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -143,6 +144,13 @@ export const useLabStore = create<LabState>((set, get) => ({
 		return { palette: ['#6E00FF', '#A83CF0', '#FF4BB5'], blocks: [s.effect.id], params: s.effect.params, timeline: s.timeline.keyframes };
 	},
 	applyStylePack: (sp) => set(() => ({ effect: { id: sp.blocks[0] || 'halftone', params: sp.params, mix: 0 }, timeline: { keyframes: sp.timeline } })),
+	resetDefaults: () => set(() => ({
+		effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0 }, mix: 0 },
+		timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] },
+		play: { t: 0, playing: true },
+		text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 } },
+		exportSettings: {},
+	}))
 }));
 
 
