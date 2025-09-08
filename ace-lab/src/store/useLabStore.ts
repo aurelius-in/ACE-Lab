@@ -4,6 +4,8 @@ import { checkPolicy } from '../policy/check';
 export type TexSource = { kind: 'image'|'video'; src: string };
 export type Preset = { id: string; name: string; params: Record<string, number> };
 
+type TextParams = { amp: number; freq: number; speed: number; outlinePx: number };
+
 type LabState = {
 	media: { primary?: TexSource; secondary?: TexSource };
 	effect: { id: string; params: Record<string, number>; mix: number };
@@ -12,6 +14,7 @@ type LabState = {
 	device: 'mobile'|'desktop';
 	presets: Preset[];
 	editCount: number;
+	text: { enabled: boolean; value: string; params: TextParams };
 	setEffectParam: (k: string, v: number) => void;
 	applyPreset: (p: Preset) => void;
 	record: (seconds: number) => Promise<void>;
@@ -20,6 +23,9 @@ type LabState = {
 	setPrimary: (src: string) => void;
 	setSecondary: (src: string) => void;
 	exportPolicyCheck: (w: number, h: number) => { allowed: boolean; message?: string; fix?: () => { width: number; height: number } };
+	setTextValue: (t: string) => void;
+	setTextParam: (k: keyof TextParams, v: number) => void;
+	toggleText: (on: boolean) => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -33,9 +39,9 @@ export const useLabStore = create<LabState>((set, get) => ({
 		{ id: 'halftone-bold', name: 'Bold Halftone', params: { dotScale: 6, angleRad: 0.8, contrast: 1.3, invert01: 0 } },
 	],
 	editCount: 0,
+	text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 } },
 	setEffectParam: (k, v) => set((s) => {
 		const next = { effect: { ...s.effect, params: { ...s.effect.params, [k]: v } }, editCount: s.editCount + 1 } as Partial<LabState> as any;
-		// After 10 edits, ensure at least two suggested presets exist
 		if (s.editCount + 1 === 10 && s.presets.length < 2) {
 			next.presets = [
 				...(s.presets ?? []),
@@ -57,15 +63,10 @@ export const useLabStore = create<LabState>((set, get) => ({
 				set({ presets: [...s.presets, { id: 'ai-contrast', name: 'ACE Contrast Pop', params: { dotScale: 7, angleRad: 0.7, contrast: 1.25, invert01: 0 } }, { id: 'ai-retro', name: 'Retro Orchid', params: { dotScale: 11, angleRad: 0.4, contrast: 0.9, invert01: 0 } }] });
 			}
 		} else if (name === 'PerfAgent') {
-			// Reduce cross-zoom samples ~30% when secondary present
 			const s = get();
 			if (s.media.secondary) {
 				const params = { ...s.effect.params } as any;
-				if (typeof params.samples === 'number') {
-					params.samples = Math.max(8, Math.floor(params.samples * 0.7));
-				} else {
-					params.samples = 8;
-				}
+				if (typeof params.samples === 'number') { params.samples = Math.max(8, Math.floor(params.samples * 0.7)); } else { params.samples = 8; }
 				set({ effect: { ...s.effect, params } });
 			}
 		}
@@ -79,6 +80,9 @@ export const useLabStore = create<LabState>((set, get) => ({
 		const fix = res.fixes?.[0];
 		return { allowed: false, message: res.violations[0], fix: fix ? () => fix.apply({ width: w, height: h, device: get().device }) : undefined };
 	},
+	setTextValue: (t) => set((s)=> ({ text: { ...s.text, value: t } })),
+	setTextParam: (k, v) => set((s)=> ({ text: { ...s.text, params: { ...s.text.params, [k]: v } } })),
+	toggleText: (on) => set((s)=> ({ text: { ...s.text, enabled: on } })),
 }));
 
 

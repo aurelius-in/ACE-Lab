@@ -2,8 +2,9 @@ import { useState } from 'react';
 import ControlsPanel from './ControlsPanel';
 import PresetsPanel from './presets/PresetsPanel';
 import CopilotPanel from './copilot/CopilotPanel';
+import TextControls from './TextControls';
 
-const tabs = ['Effects','Presets','Co-pilot'] as const;
+const tabs = ['Effects','Text','Presets','Co-pilot'] as const;
 type Tab = typeof tabs[number];
 
 export default function RightPanelTabs(){
@@ -16,6 +17,7 @@ export default function RightPanelTabs(){
 				))}
 			</div>
 			{tab==='Effects' && <ControlsPanel/>}
+			{tab==='Text' && <TextControls/>}
 			{tab==='Presets' && <PresetsPanel/>}
 			{tab==='Co-pilot' && <CopilotPanel/>}
 		</div>
