@@ -11,6 +11,22 @@ npm install
 npm run dev
 ```
 
+## Quick usage
+
+- Load Image A (and optionally Image B) in Effects tab.
+- Adjust Halftone sliders; add Text in Text tab.
+- Play the timeline; use Auto-compose to insert keyframes.
+- Use device toggle (Desktop/Mobile). Export applies 1080p on Mobile.
+
+## Acceptance checks (this iteration)
+
+- Load photo, apply Halftone, Record 3s → downloads WebM
+- Transition with two images, keyframes render and play
+- BriefAgent with prompt “warm retro print, soft grain” updates look
+- PerfAgent on cross-zoom reduces samples when needed
+- PolicyAgent blocks 4K on Mobile and fixes to 1080p
+- After 10 edits, PresetAgent suggests ≥2 presets
+
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
