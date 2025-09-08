@@ -1,0 +1,14 @@
+[
+  {
+    "id": "builtin-halftone-warm",
+    "name": "Halftone Warm",
+    "params": { "dotScale": 9, "angleRad": 0.55, "contrast": 1.1, "invert01": 0 }
+  },
+  {
+    "id": "builtin-crosszoom-soft",
+    "name": "Cross-zoom Soft",
+    "params": { "zoomStrength": 0.8, "samples": 16 }
+  }
+]
+
+
