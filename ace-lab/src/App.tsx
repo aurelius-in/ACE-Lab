@@ -5,8 +5,8 @@ import CanvasHost from './lab/CanvasHost'
 import RightPanelTabs from './lab/RightPanelTabs'
 import TimelinePanel from './lab/TimelinePanel'
 import LibraryPanel from './lab/LibraryPanel'
-import { captureCanvasWebm, captureScaledWebmFromCanvas } from './utils/media'
-import { useState } from 'react'
+import { captureCanvasWebm, captureScaledWebmFromCanvas, downloadJson } from './utils/media'
+import { useEffect, useState } from 'react'
 import { useLabStore } from './store/useLabStore'
 
 function App() {
@@ -15,6 +15,10 @@ function App() {
 	const check = useLabStore(s => s.exportPolicyCheck)
 	const device = useLabStore(s => s.device)
 	const setDevice = useLabStore(s => s.setDevice)
+	const play = useLabStore(s => s.play)
+	const togglePlay = useLabStore(s => s.togglePlay)
+	const setPlayhead = useLabStore(s => s.setPlayhead)
+	const buildPack = useLabStore(s => s.buildStylePack)
 
 	async function handleExport() {
 		const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
@@ -41,6 +45,23 @@ function App() {
 		a.href = url; a.download = `ace-${seconds}s.webm`; a.click()
 		URL.revokeObjectURL(url)
 	}
+
+	useEffect(() => {
+		function onKey(e: KeyboardEvent){
+			if (e.target && (e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
+			switch(e.key){
+				case ' ': e.preventDefault(); togglePlay(); break;
+				case 'ArrowRight': setPlayhead((play.t + 0.01) % 1); break;
+				case 'ArrowLeft': setPlayhead((play.t - 0.01 + 1) % 1); break;
+				case 'e': case 'E': handleExport(); break;
+				case 'r': case 'R': handleRecord(3); break;
+				case '6': handleRecord(6); break;
+				case 's': case 'S': downloadJson('ace-style-pack.json', buildPack()); break;
+			}
+		}
+		window.addEventListener('keydown', onKey);
+		return () => window.removeEventListener('keydown', onKey);
+	}, [play.t, togglePlay, setPlayhead, buildPack])
 
 	return (
 		<AppShell
