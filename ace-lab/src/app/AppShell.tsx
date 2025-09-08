@@ -1,12 +1,10 @@
-import { PropsWithChildren, useState } from 'react';
+import { PropsWithChildren } from 'react';
 import { clsx } from 'clsx';
 
 const tabs = ['Lab', 'Agents', 'Library'] as const;
-type TabKey = typeof tabs[number];
+export type TabKey = typeof tabs[number];
 
-export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6 }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void }) {
-	const [active, setActive] = useState<TabKey>('Lab');
-
+export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void }) {
 	return (
 		<div className="min-h-screen text-[var(--ink-100)] bg-[var(--ink-950)]">
 			<header className="sticky top-0 z-10 backdrop-blur-sm">
@@ -23,7 +21,7 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6 }
 					</div>
 					<nav className="flex items-center gap-2">
 						{tabs.map(t => (
-							<button key={t} className={clsx('px-3 py-1.5 rounded-2xl border border-white/10 text-sm', active===t ? 'ace-gradient-text' : 'text-white/70 hover:text-white')} onClick={() => setActive(t)}>
+							<button key={t} className={clsx('px-3 py-1.5 rounded-2xl border border-white/10 text-sm', activeTab===t ? 'ace-gradient-text' : 'text-white/70 hover:text-white')} onClick={() => onTabChange(t)}>
 								{t}
 							</button>
 						))}
