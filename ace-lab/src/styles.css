@@ -36,8 +36,16 @@ h1, h2, h3, h4 { font-family: Poppins, Inter, system-ui, Avenir, Helvetica, Aria
 	transition: transform .15s ease, box-shadow .2s ease;
 }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(168,60,240,.25); }
+.btn-primary:focus { outline: 2px solid rgba(255,75,181,.6); outline-offset: 2px; }
 
 .card-dark { background: var(--ink-900); border: 1px solid rgba(255,255,255,.06); border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+
+/* Slider aesthetic to match brand */
+input[type="range"] {
+	-webkit-appearance: none; appearance: none; height: 6px; border-radius: 9999px; background: linear-gradient(90deg, var(--ace-g1), var(--ace-g3)); outline: none;
+}
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: #fff; border-radius: 9999px; box-shadow: 0 2px 6px rgba(0,0,0,.35); border: 1px solid rgba(0,0,0,.2); }
+input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #fff; border-radius: 9999px; box-shadow: 0 2px 6px rgba(0,0,0,.35); border: 1px solid rgba(0,0,0,.2); }
 
 .ace-glow::before { content: ""; position: absolute; inset: -20% -20% -20% -20%; background: var(--glow-ace); filter: blur(20px); z-index: -1; }
 
