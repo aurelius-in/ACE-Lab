@@ -11,9 +11,24 @@ import { useLabStore } from './store/useLabStore'
 function App() {
 	const [tab, setTab] = useState<TabKey>('Lab')
 	const runAgent = useLabStore(s => s.runAgent)
+	const check = useLabStore(s => s.exportPolicyCheck)
 
 	async function handleExport() {
-		alert('Export action placeholder')
+		const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
+		if (!canvas) return alert('Nothing to export')
+		const { allowed, message, fix } = check(canvas.width, canvas.height)
+		if (!allowed) {
+			if (confirm(`${message}. Apply fix?`)) {
+				const f = fix?.({ width: canvas.width, height: canvas.height })
+				// In this iteration we just proceed to record; real resize would render offscreen
+			}
+			return
+		}
+		const blob = await captureCanvasWebm(canvas, 3)
+		const url = URL.createObjectURL(blob)
+		const a = document.createElement('a')
+		a.href = url; a.download = `ace-export.webm`; a.click()
+		URL.revokeObjectURL(url)
 	}
 	async function handleRecord(seconds: number) {
 		const canvas = document.querySelector('canvas')
