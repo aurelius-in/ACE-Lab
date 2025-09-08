@@ -5,6 +5,7 @@ export default function CopilotPanel(){
 	const brief = useLabStore(s => s.briefPrompt);
 	const setBrief = useLabStore(s => s.setBriefPrompt);
 	const device = useLabStore(s => s.device);
+	const qa = useLabStore(s => s.qa);
 	return (
 		<div className="space-y-3">
 			<div>
@@ -16,6 +17,8 @@ export default function CopilotPanel(){
 				<button className="btn-primary w-full" onClick={()=>runAgent('PerfAgent')}>Apply Mobile Safe</button>
 				<button className="btn-primary w-full" onClick={()=>runAgent('TransitionAgent')}>Insert Keyframes</button>
 				<button className="btn-primary w-full" onClick={()=>runAgent('PolicyAgent')}>Fix Violations {device==='mobile' ? '(1080p)' : ''}</button>
+				<button className="btn-primary w-full" onClick={()=>runAgent('QAAgent')}>QA Sweep</button>
+				{qa && <div className="text-xs text-white/70">QA: ~{qa.fps} fps</div>}
 			</div>
 		</div>
 	);
