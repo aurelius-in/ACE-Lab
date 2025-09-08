@@ -30,7 +30,8 @@ export default function CanvasHost() {
 
 		function compile(type: number, src: string) { const sh = gl.createShader(type)!; gl.shaderSource(sh, src); gl.compileShader(sh); if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(sh)); } return sh; }
 		const vs = compile(gl.VERTEX_SHADER, VERT_SRC as string);
-		const fragSrc = media.secondary ? CROSS_SRC : HALFTONE_SRC;
+		const wantCross = effect.id === 'crosszoom' && !!media.secondary;
+		const fragSrc = wantCross ? CROSS_SRC : HALFTONE_SRC;
 		const fs = compile(gl.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${fragSrc}`);
 		const baseProg = gl.createProgram()!; gl.attachShader(baseProg, vs); gl.attachShader(baseProg, fs); gl.linkProgram(baseProg);
 
@@ -67,7 +68,7 @@ export default function CanvasHost() {
 			resize();
 			const now = performance.now(); const dt = Math.min(0.1, (now - last) / 1000); last = now;
 			if (play.playing) { const nt = (play.t + dt) % 1; setPlayhead(nt); }
-			const mix = media.secondary ? mixAt(play.t) : 1.0;
+			const mix = wantCross ? mixAt(play.t) : 1.0;
 
 			// base pass to rt
 			gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
@@ -76,8 +77,8 @@ export default function CanvasHost() {
 			gl.uniform1f(gl.getUniformLocation(baseProg, 'uTime'), now/1000);
 			gl.uniform1f(gl.getUniformLocation(baseProg, 'uMix'), mix);
 			gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex0); const loc0 = gl.getUniformLocation(baseProg,'uTex0'); if(loc0) gl.uniform1i(loc0,0);
-			if (media.secondary){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex1); const loc1 = gl.getUniformLocation(baseProg,'uTex1'); if(loc1) gl.uniform1i(loc1,1); }
-			const p = effect.params as any; let zoomStrength = p.zoomStrength ?? 0.8; let samples = Math.max(1, Math.min(32, Math.floor(p.samples ?? 16))); if (fps < 30 && media.secondary) { if (samples > 8) { samples = 8; if (!tip) { setTip('Performance: reduced samples to keep 30fps'); setTimeout(()=>setTip(null), 2000); } } } const locP = gl.getUniformLocation(baseProg,'uParams'); if(locP) gl.uniform4f(locP, p.dotScale ?? zoomStrength, p.angleRad ?? samples, p.contrast ?? 1, p.invert01 ?? 0);
+			if (wantCross){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex1); const loc1 = gl.getUniformLocation(baseProg,'uTex1'); if(loc1) gl.uniform1i(loc1,1); }
+			const p = effect.params as any; let zoomStrength = p.zoomStrength ?? 0.8; let samples = Math.max(1, Math.min(32, Math.floor(p.samples ?? 16))); if (fps < 30 && wantCross) { if (samples > 8) { samples = 8; if (!tip) { setTip('Performance: reduced samples to keep 30fps'); setTimeout(()=>setTip(null), 2000); } } } const locP = gl.getUniformLocation(baseProg,'uParams'); if(locP) gl.uniform4f(locP, p.dotScale ?? zoomStrength, p.angleRad ?? samples, p.contrast ?? 1, p.invert01 ?? 0);
 			gl.drawArrays(gl.TRIANGLES, 0, 3);
 
 			// text on rt
@@ -102,7 +103,7 @@ export default function CanvasHost() {
 		function vis(){ running = document.visibilityState === 'visible'; }
 		document.addEventListener('visibilitychange', vis);
 		return () => { cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', vis); };
-	}, [media.primary?.src, media.secondary?.src, effect.params, publishFps, timeline.keyframes, fps, tip, text.enabled, text.value, text.params, play.playing, play.t, setPlayhead]);
+	}, [media.primary?.src, media.secondary?.src, effect.id, effect.params, publishFps, timeline.keyframes, fps, tip, text.enabled, text.value, text.params, play.playing, play.t, setPlayhead]);
 
 	return (
 		<div className="relative w-full h-full">
