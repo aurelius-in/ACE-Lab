@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 const tabs = ['Lab', 'Agents', 'Library'] as const;
 export type TabKey = typeof tabs[number];
 
-export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void }) {
+export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange, device, onDeviceChange }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void, device: 'mobile'|'desktop', onDeviceChange: (d: 'mobile'|'desktop') => void }) {
 	return (
 		<div className="min-h-screen text-[var(--ink-100)] bg-[var(--ink-950)]">
 			<header className="sticky top-0 z-10 backdrop-blur-sm">
@@ -27,6 +27,10 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 						))}
 					</nav>
 					<div className="flex items-center gap-2">
+						<select aria-label="Device" value={device} onChange={(e)=>onDeviceChange(e.target.value as any)} className="px-2 py-1 rounded-xl bg-black/40 border border-white/10 text-sm">
+							<option value="desktop">Desktop</option>
+							<option value="mobile">Mobile</option>
+						</select>
 						<button className="btn-primary" onClick={onExport}>Export</button>
 						<button className="btn-primary" onClick={onRecord3}>Record 3s</button>
 						<button className="btn-primary" onClick={onRecord6}>Record 6s</button>

@@ -22,10 +22,13 @@ type LabState = {
 	setFps: (n: number) => void;
 	setPrimary: (src: string) => void;
 	setSecondary: (src: string) => void;
+	clearPrimary: () => void;
+	clearSecondary: () => void;
 	exportPolicyCheck: (w: number, h: number) => { allowed: boolean; message?: string; fix?: () => { width: number; height: number } };
 	setTextValue: (t: string) => void;
 	setTextParam: (k: keyof TextParams, v: number) => void;
 	toggleText: (on: boolean) => void;
+	setDevice: (d: 'mobile'|'desktop') => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -74,6 +77,8 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setFps: (n) => set(() => ({ fps: n })),
 	setPrimary: (src) => set((s) => ({ media: { ...s.media, primary: { kind: 'image', src } } })),
 	setSecondary: (src) => set((s) => ({ media: { ...s.media, secondary: { kind: 'image', src } } })),
+	clearPrimary: () => set((s) => ({ media: { ...s.media, primary: undefined } })),
+	clearSecondary: () => set((s) => ({ media: { ...s.media, secondary: undefined } })),
 	exportPolicyCheck: (w, h) => {
 		const res = checkPolicy({ width: w, height: h, device: get().device });
 		if (res.allowed) return { allowed: true };
@@ -83,6 +88,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setTextValue: (t) => set((s)=> ({ text: { ...s.text, value: t } })),
 	setTextParam: (k, v) => set((s)=> ({ text: { ...s.text, params: { ...s.text.params, [k]: v } } })),
 	toggleText: (on) => set((s)=> ({ text: { ...s.text, enabled: on } })),
+	setDevice: (d) => set(() => ({ device: d })),
 }));
 
 
