@@ -18,6 +18,13 @@ npm run dev
 - Play the timeline; use Auto-compose to insert keyframes.
 - Use device toggle (Desktop/Mobile). Export applies 1080p on Mobile.
 
+### Keyboard shortcuts
+
+- Space: Play/Pause
+- Left/Right: Scrub timeline
+- R: Record 3s  •  6: Record 6s
+- E: Export  •  S: Save Style Pack
+
 ## Acceptance checks (this iteration)
 
 - Load photo, apply Halftone, Record 3s → downloads WebM
