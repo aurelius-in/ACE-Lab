@@ -15,6 +15,7 @@ type LabState = {
 	runAgent: (name: string, input?: unknown) => Promise<void>;
 	setFps: (n: number) => void;
 	setPrimary: (src: string) => void;
+	setSecondary: (src: string) => void;
 };
 
 export const useLabStore = create<LabState>((set) => ({
@@ -39,6 +40,7 @@ export const useLabStore = create<LabState>((set) => ({
 	},
 	setFps: (n) => set(() => ({ fps: n })),
 	setPrimary: (src) => set((s) => ({ media: { ...s.media, primary: { kind: 'image', src } } })),
+	setSecondary: (src) => set((s) => ({ media: { ...s.media, secondary: { kind: 'image', src } } })),
 }));
 
 

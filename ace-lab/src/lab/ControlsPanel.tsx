@@ -4,10 +4,11 @@ export default function ControlsPanel() {
 	const effect = useLabStore(s => s.effect);
 	const setParam = useLabStore(s => s.setEffectParam);
 	const setPrimary = useLabStore(s => s.setPrimary);
+	const setSecondary = useLabStore(s => s.setSecondary);
 
-	function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+	function onFile(e: React.ChangeEvent<HTMLInputElement>, which: 'primary'|'secondary') {
 		const f = e.target.files?.[0]; if (!f) return;
-		const url = URL.createObjectURL(f); setPrimary(url);
+		const url = URL.createObjectURL(f); which==='primary' ? setPrimary(url) : setSecondary(url);
 	}
 
 	return (
@@ -15,8 +16,12 @@ export default function ControlsPanel() {
 			<h2 className="text-lg font-semibold ace-gradient-text">Effects</h2>
 			<div className="space-y-3">
 				<label className="block text-sm">
-					<span className="text-white/70">Image</span>
-					<input type="file" accept="image/*" onChange={onFile} className="block mt-1 text-sm" />
+					<span className="text-white/70">Image A</span>
+					<input type="file" accept="image/*" onChange={(e)=>onFile(e,'primary')} className="block mt-1 text-sm" />
+				</label>
+				<label className="block text-sm">
+					<span className="text-white/70">Image B</span>
+					<input type="file" accept="image/*" onChange={(e)=>onFile(e,'secondary')} className="block mt-1 text-sm" />
 				</label>
 				{Object.entries(effect.params).map(([k, v]) => (
 					<label key={k} className="block text-sm">
