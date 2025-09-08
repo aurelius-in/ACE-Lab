@@ -1,12 +1,10 @@
-import { PropsWithChildren, useState } from 'react';
+import { PropsWithChildren } from 'react';
 import { clsx } from 'clsx';
 
 const tabs = ['Lab', 'Agents', 'Library'] as const;
-type TabKey = typeof tabs[number];
+export type TabKey = typeof tabs[number];
 
-export function AppShell({ children }: PropsWithChildren) {
-	const [active, setActive] = useState<TabKey>('Lab');
-
+export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void }) {
 	return (
 		<div className="min-h-screen text-[var(--ink-100)] bg-[var(--ink-950)]">
 			<header className="sticky top-0 z-10 backdrop-blur-sm">
@@ -23,15 +21,15 @@ export function AppShell({ children }: PropsWithChildren) {
 					</div>
 					<nav className="flex items-center gap-2">
 						{tabs.map(t => (
-							<button key={t} className={clsx('px-3 py-1.5 rounded-2xl border border-white/10 text-sm', active===t ? 'ace-gradient-text' : 'text-white/70 hover:text-white')} onClick={() => setActive(t)}>
+							<button key={t} className={clsx('px-3 py-1.5 rounded-2xl border border-white/10 text-sm', activeTab===t ? 'ace-gradient-text' : 'text-white/70 hover:text-white')} onClick={() => onTabChange(t)}>
 								{t}
 							</button>
 						))}
 					</nav>
 					<div className="flex items-center gap-2">
-						<button className="btn-primary">Export</button>
-						<button className="btn-primary">Record 3s</button>
-						<button className="btn-primary">Record 6s</button>
+						<button className="btn-primary" onClick={onExport}>Export</button>
+						<button className="btn-primary" onClick={onRecord3}>Record 3s</button>
+						<button className="btn-primary" onClick={onRecord6}>Record 6s</button>
 					</div>
 				</div>
 			</header>
@@ -39,7 +37,7 @@ export function AppShell({ children }: PropsWithChildren) {
 				<section className="lg:col-span-8 relative card-dark p-2">
 					{children}
 				</section>
-				<aside className="lg:col-span-4 card-dark p-4">Right panel</aside>
+				<aside className="lg:col-span-4 card-dark p-4">{rightSlot}</aside>
 			</main>
 		</div>
 	);
