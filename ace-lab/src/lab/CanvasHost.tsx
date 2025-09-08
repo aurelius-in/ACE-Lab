@@ -10,11 +10,14 @@ import VERT_SRC from '../shaders/fullscreen.vert?raw';
 
 export default function CanvasHost() {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const publishFps = useLabStore(s => s.setFps);
   const media = useLabStore(s => s.media);
   const effect = useLabStore(s => s.effect);
   const timeline = useLabStore(s => s.timeline);
+  const text = useLabStore(s => s.text);
   const [fps, setFpsLocal] = useState(60);
+  const [tip, setTip] = useState<string | null>(null);
 
 	useEffect(() => {
 		const canvas = canvasRef.current; if (!canvas) return;
@@ -37,30 +40,51 @@ export default function CanvasHost() {
 		upload(media.primary?.src || '/ace-lab.webp', tex0);
 		if (media.secondary) upload(media.secondary.src, tex1);
 
-		let raf = 0; const times: number[] = []; const t0 = performance.now();
-		function resize() { const dpr = Math.min(window.devicePixelRatio||1,2); const w = canvas.clientWidth*dpr; const h = canvas.clientHeight*dpr; if (canvas.width!==w||canvas.height!==h) { canvas.width=w; canvas.height=h; gl.viewport(0,0,w,h);} }
-		function mixFromTimeline(elapsed: number){ const keys = timeline.keyframes; if(keys.length===0) return 0; const T = elapsed % 1; // normalize 0..1
-			let prev = keys[0]; for (let i=1;i<keys.length;i++){ const cur = keys[i]; if (T<=cur.t){ const span = cur.t - prev.t || 1; const local = (T - prev.t)/span; return prev.mix*(1-local)+cur.mix*local; } prev = cur; } return keys[keys.length-1].mix; }
+		let raf = 0; const times: number[] = []; const t0 = performance.now(); let running = true;
+		function resize() { const dpr = Math.min(window.devicePixelRatio||1,2); const w = canvas.clientWidth*dpr; const h = canvas.clientHeight*dpr; if (canvas.width!==w||canvas.height!==h) { canvas.width=w; canvas.height=h; gl.viewport(0,0,w,h);} const overlay = overlayRef.current; if(overlay){ overlay.width = canvas.clientWidth; overlay.height = canvas.clientHeight; }}
+		function mixFromTimeline(elapsed: number){ const keys = timeline.keyframes; if(keys.length===0) return 0; const T = (elapsed % 1 + 1) % 1; let prev = keys[0]; for (let i=1;i<keys.length;i++){ const cur = keys[i]; if (T<=cur.t){ const span = cur.t - prev.t || 1; const local = (T - prev.t)/span; return prev.mix*(1-local)+cur.mix*local; } prev = cur; } return keys[keys.length-1].mix; }
 		const loop = () => {
+			if (!running) { raf = requestAnimationFrame(loop); return; }
 			resize(); gl.useProgram(prog);
 			gl.uniform2f(gl.getUniformLocation(prog, 'uRes'), canvas.width, canvas.height);
 			gl.uniform1f(gl.getUniformLocation(prog, 'uTime'), performance.now()/1000);
 			const elapsed = (performance.now()-t0)/1000; gl.uniform1f(gl.getUniformLocation(prog, 'uMix'), media.secondary ? mixFromTimeline(elapsed) : 1.0);
 			gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex0); const loc0 = gl.getUniformLocation(prog,'uTex0'); if(loc0) gl.uniform1i(loc0,0);
 			if (media.secondary){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex1); const loc1 = gl.getUniformLocation(prog,'uTex1'); if(loc1) gl.uniform1i(loc1,1); }
-			const p = effect.params as any; const locP = gl.getUniformLocation(prog,'uParams'); if(locP) gl.uniform4f(locP, p.dotScale||8, p.angleRad||0.6, p.contrast||1, p.invert01||0);
+			const p = effect.params as any;
+			let zoomStrength = p.zoomStrength ?? 0.8;
+			let samples = Math.max(1, Math.min(32, Math.floor(p.samples ?? 16)));
+			if (fps < 30 && media.secondary) { if (samples > 8) { samples = 8; if (!tip) { setTip('Performance: reduced samples to keep 30fps'); setTimeout(()=>setTip(null), 2000); } } }
+			const locP = gl.getUniformLocation(prog,'uParams'); if(locP) gl.uniform4f(locP, p.dotScale ?? zoomStrength, p.angleRad ?? samples, p.contrast ?? 1, p.invert01 ?? 0);
 			gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+			// draw text overlay via 2D canvas for now
+			const overlay = overlayRef.current; if (overlay && text.enabled) {
+				const ctx = overlay.getContext('2d'); if (ctx) {
+					ctx.clearRect(0,0,overlay.width, overlay.height);
+					ctx.font = '700 28px Poppins';
+					ctx.fillStyle = 'white';
+					const y = overlay.height*0.1 + Math.sin(performance.now()/1000*text.params.speed)*text.params.amp;
+					ctx.fillText(text.value, overlay.width*0.05, y);
+				}
+			}
+
 			times.push(performance.now()); if(times.length>120) times.shift(); const f = Math.round(fpsFromSamples(times)); setFpsLocal(f); publishFps(f);
 			raf = requestAnimationFrame(loop);
 		};
 		rAF(); function rAF(){ raf = requestAnimationFrame(loop); }
-		return () => cancelAnimationFrame(raf);
-	}, [media.primary?.src, media.secondary?.src, effect.params, publishFps, timeline.keyframes]);
+
+		function vis(){ running = document.visibilityState === 'visible'; }
+		document.addEventListener('visibilitychange', vis);
+		return () => { cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', vis); };
+	}, [media.primary?.src, media.secondary?.src, effect.params, publishFps, timeline.keyframes, fps, tip, text.enabled, text.value, text.params]);
 
 	return (
 		<div className="relative w-full h-full">
 			<canvas ref={canvasRef} className="w-full h-full rounded-2xl" aria-label="editor preview" />
+			<canvas ref={overlayRef} className="absolute inset-0 pointer-events-none" />
 			<div className="absolute top-2 left-2 text-xs px-2 py-1 rounded-full bg-black/60 border border-white/10">{fps} fps</div>
+			{tip && (<div className="absolute top-2 right-2 text-xs px-2 py-1 rounded-full bg-black/60 border border-white/10">{tip}</div>)}
 		</div>
 	)
 }
