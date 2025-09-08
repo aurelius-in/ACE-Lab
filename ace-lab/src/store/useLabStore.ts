@@ -13,6 +13,7 @@ type LabState = {
 	applyPreset: (p: Preset) => void;
 	record: (seconds: number) => Promise<void>;
 	runAgent: (name: string, input?: unknown) => Promise<void>;
+	setFps: (n: number) => void;
 };
 
 export const useLabStore = create<LabState>((set) => ({
@@ -35,6 +36,7 @@ export const useLabStore = create<LabState>((set) => ({
 			set(() => ({ timeline: { keyframes: keys } }));
 		}
 	},
+	setFps: (n) => set(() => ({ fps: n })),
 }));
 
 

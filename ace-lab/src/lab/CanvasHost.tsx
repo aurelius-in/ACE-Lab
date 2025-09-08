@@ -4,7 +4,7 @@ import { useLabStore } from '../store/useLabStore';
 
 export default function CanvasHost() {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const setFps = useLabStore(s => s.fps);
+  const publishFps = useLabStore(s => s.setFps);
   const [fps, setFpsLocal] = useState(60);
 
 	useEffect(() => {
@@ -27,10 +27,16 @@ export default function CanvasHost() {
 			gl.clear(gl.COLOR_BUFFER_BIT);
 		};
 		const times: number[] = [];
-		const loop = () => { resize(); clear(); times.push(performance.now()); if(times.length>120) times.shift(); setFpsLocal(Math.round(fpsFromSamples(times))); raf = requestAnimationFrame(loop); };
+		const loop = () => {
+			resize(); clear();
+			times.push(performance.now()); if(times.length>120) times.shift();
+			const f = Math.round(fpsFromSamples(times));
+			setFpsLocal(f); publishFps(f);
+			raf = requestAnimationFrame(loop);
+		};
 		renderQueueMicrotask(() => loop());
 		return () => cancelAnimationFrame(raf);
-	}, []);
+	}, [publishFps]);
 
 	return (
 		<div className="relative w-full h-full">
