@@ -12,6 +12,7 @@ type LabState = {
 	media: { primary?: TexSource; secondary?: TexSource };
 	effect: { id: string; params: Record<string, number>; mix: number };
 	timeline: { keyframes: { t: number; mix: number }[] };
+	play: { t: number; playing: boolean };
 	fps: number; gpuMs?: number;
 	device: 'mobile'|'desktop';
 	presets: Preset[];
@@ -36,12 +37,15 @@ type LabState = {
 	setDevice: (d: 'mobile'|'desktop') => void;
 	setBriefPrompt: (t: string) => void;
 	setExportSize: (w?: number, h?: number) => void;
+	setPlayhead: (t: number) => void;
+	togglePlay: () => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
 	media: {},
 	effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0 }, mix: 0 },
 	timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] },
+	play: { t: 0, playing: true },
 	fps: 60,
 	device: 'desktop',
 	presets: [
@@ -108,6 +112,8 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setDevice: (d) => set(() => ({ device: d })),
 	setBriefPrompt: (t) => set(() => ({ briefPrompt: t })),
 	setExportSize: (w, h) => set(() => ({ exportSettings: { width: w, height: h } })),
+	setPlayhead: (t) => set(() => ({ play: { ...get().play, t: Math.max(0, Math.min(1, t)) } })),
+	togglePlay: () => set(() => ({ play: { ...get().play, playing: !get().play.playing } })),
 }));
 
 
