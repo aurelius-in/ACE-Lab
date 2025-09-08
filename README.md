@@ -1,6 +1,9 @@
 # ACE Lab — Agentic Creative Experience Lab
 
-![ACE Lab logo](./ace-lab.png)
+<p align="center">
+  <img src="./ace-lab.png" alt="ACE Lab logo" width="25%" />
+</p>
+
 
 A compact creative-tools platform that pairs real-time shaders with agentic AI. Load images or video, apply from-scratch GLSL effects, record clips, and let specialized agents propose looks, optimize performance, compose transitions, and keep outputs on brand.
 
