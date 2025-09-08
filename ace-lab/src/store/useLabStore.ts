@@ -77,7 +77,20 @@ export const useLabStore = create<LabState>((set, get) => ({
 		}
 		return next;
 	}),
-	setEffectId: (id) => set((s)=> ({ effect: { ...s.effect, id } })),
+	setEffectId: (id) => set((s)=> {
+		const current = s.effect;
+		let params = { ...current.params };
+		if (id === 'crosszoom') {
+			params.zoomStrength = params.zoomStrength ?? 0.8;
+			params.samples = params.samples ?? 16;
+		} else if (id === 'halftone') {
+			params.dotScale = params.dotScale ?? 8;
+			params.angleRad = params.angleRad ?? 0.6;
+			params.contrast = params.contrast ?? 1.0;
+			params.invert01 = params.invert01 ?? 0;
+		}
+		return { effect: { ...current, id, params } } as Partial<LabState> as any;
+	}),
 	applyPreset: (p) => set(() => ({ effect: { id: p.id, params: p.params, mix: 0 } })),
 	record: async () => { /* handled in App for now */ },
 	runAgent: async (name) => {
