@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { checkPolicy } from '../policy/check';
+import { briefFromPrompt } from '../agents/brief';
 
 export type TexSource = { kind: 'image'|'video'; src: string };
 export type Preset = { id: string; name: string; params: Record<string, number> };
@@ -15,6 +16,7 @@ type LabState = {
 	presets: Preset[];
 	editCount: number;
 	text: { enabled: boolean; value: string; params: TextParams };
+	briefPrompt: string;
 	setEffectParam: (k: string, v: number) => void;
 	applyPreset: (p: Preset) => void;
 	record: (seconds: number) => Promise<void>;
@@ -29,6 +31,7 @@ type LabState = {
 	setTextParam: (k: keyof TextParams, v: number) => void;
 	toggleText: (on: boolean) => void;
 	setDevice: (d: 'mobile'|'desktop') => void;
+	setBriefPrompt: (t: string) => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -43,6 +46,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 	],
 	editCount: 0,
 	text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 } },
+	briefPrompt: 'warm retro print, soft grain',
 	setEffectParam: (k, v) => set((s) => {
 		const next = { effect: { ...s.effect, params: { ...s.effect.params, [k]: v } }, editCount: s.editCount + 1 } as Partial<LabState> as any;
 		if (s.editCount + 1 === 10 && s.presets.length < 2) {
@@ -72,6 +76,9 @@ export const useLabStore = create<LabState>((set, get) => ({
 				if (typeof params.samples === 'number') { params.samples = Math.max(8, Math.floor(params.samples * 0.7)); } else { params.samples = 8; }
 				set({ effect: { ...s.effect, params } });
 			}
+		} else if (name === 'BriefAgent') {
+			const lp = briefFromPrompt(get().briefPrompt);
+			set({ effect: { ...get().effect, params: { ...get().effect.params, ...lp.params } } });
 		}
 	},
 	setFps: (n) => set(() => ({ fps: n })),
@@ -89,6 +96,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setTextParam: (k, v) => set((s)=> ({ text: { ...s.text, params: { ...s.text.params, [k]: v } } })),
 	toggleText: (on) => set((s)=> ({ text: { ...s.text, enabled: on } })),
 	setDevice: (d) => set(() => ({ device: d })),
+	setBriefPrompt: (t) => set(() => ({ briefPrompt: t })),
 }));
 
 
