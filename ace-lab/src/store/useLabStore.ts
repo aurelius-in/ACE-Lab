@@ -29,6 +29,7 @@ type LabState = {
 	briefPrompt: string;
 	qa?: { fps: number };
 	setEffectParam: (k: string, v: number) => void;
+	setEffectId: (id: string) => void;
 	applyPreset: (p: Preset) => void;
 	record: (seconds: number) => Promise<void>;
 	runAgent: (name: string, input?: unknown) => Promise<void>;
@@ -76,6 +77,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 		}
 		return next;
 	}),
+	setEffectId: (id) => set((s)=> ({ effect: { ...s.effect, id } })),
 	applyPreset: (p) => set(() => ({ effect: { id: p.id, params: p.params, mix: 0 } })),
 	record: async () => { /* handled in App for now */ },
 	runAgent: async (name) => {
