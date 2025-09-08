@@ -1,11 +1,23 @@
-import { StrictMode } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { useLabStore } from './store/useLabStore'
+
+function Persistor(){
+	const snapshot = useLabStore(s => ({ effect: s.effect, timeline: s.timeline, text: s.text, device: s.device, exportSettings: s.exportSettings, play: s.play }))
+	useEffect(()=>{ localStorage.setItem('ace-lab-state', JSON.stringify(snapshot)); }, [snapshot])
+	useEffect(()=>{
+		const raw = localStorage.getItem('ace-lab-state');
+		if (raw) { try { const obj = JSON.parse(raw); useLabStore.getState().hydrateFrom(obj); } catch {} }
+	}, [])
+	return null
+}
 
 const root = createRoot(document.getElementById('root')!);
 root.render(
   <StrictMode>
+    <Persistor />
     <App />
   </StrictMode>
 );

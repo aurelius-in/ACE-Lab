@@ -50,6 +50,7 @@ type LabState = {
 	buildStylePack: () => StylePack;
 	applyStylePack: (sp: StylePack) => void;
 	resetDefaults: () => void;
+	hydrateFrom: (p: Partial<Pick<LabState,'effect'|'timeline'|'text'|'device'|'exportSettings'|'play'>>) => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -150,7 +151,15 @@ export const useLabStore = create<LabState>((set, get) => ({
 		play: { t: 0, playing: true },
 		text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 } },
 		exportSettings: {},
-	}))
+	})),
+	hydrateFrom: (p) => set(() => ({
+		effect: p.effect ? { ...get().effect, ...p.effect } : get().effect,
+		timeline: p.timeline ? { keyframes: p.timeline.keyframes } : get().timeline,
+		text: p.text ? { ...get().text, ...p.text } : get().text,
+		device: p.device ?? get().device,
+		exportSettings: p.exportSettings ?? get().exportSettings,
+		play: p.play ?? get().play,
+	})),
 }));
 
 
