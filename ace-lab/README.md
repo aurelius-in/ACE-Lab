@@ -1,4 +1,16 @@
-# React + TypeScript + Vite
+# ACE Lab
+
+<p align="center"><img src="./ace-lab.png" width="25%" alt="ACE Lab logo"></p>
+
+Agentic Creative Experience Lab scaffolded with Vite + React + TypeScript and Tailwind CSS. Brand styles use the ACE gradient and dark UI.
+
+## Development
+
+```
+npm install
+npm run dev
+```
+
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
