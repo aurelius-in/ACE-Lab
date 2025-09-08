@@ -11,7 +11,6 @@ export default function TimelinePanel() {
 
 	function onDown(e: React.MouseEvent, idx: number){
 		const bar = barRef.current; if (!bar) return;
-		const startX = e.clientX;
 		const rect = bar.getBoundingClientRect();
 		function move(ev: MouseEvent){
 			const dx = ev.clientX - rect.left;
