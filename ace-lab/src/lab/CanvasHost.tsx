@@ -16,6 +16,8 @@ export default function CanvasHost() {
   const media = useLabStore(s => s.media);
   const effect = useLabStore(s => s.effect);
   const timeline = useLabStore(s => s.timeline);
+  const play = useLabStore(s => s.play);
+  const setPlayhead = useLabStore(s => s.setPlayhead);
   const text = useLabStore(s => s.text);
   const [fps, setFpsLocal] = useState(60);
   const [tip, setTip] = useState<string | null>(null);
@@ -30,7 +32,6 @@ export default function CanvasHost() {
 		const fs = compile(gl.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${fragSrc}`);
 		const baseProg = gl.createProgram()!; gl.attachShader(baseProg, vs); gl.attachShader(baseProg, fs); gl.linkProgram(baseProg);
 
-		// textwave program
 		const fsText = compile(gl.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${TEXTWAVE_SRC}`);
 		const textProg = gl.createProgram()!; gl.attachShader(textProg, vs); gl.attachShader(textProg, fsText); gl.linkProgram(textProg);
 
@@ -45,58 +46,31 @@ export default function CanvasHost() {
 		upload(media.primary?.src || '/ace-lab.webp', tex0);
 		if (media.secondary) upload(media.secondary.src, tex1);
 
-		// offscreen canvas for text
-		const textCanvas = document.createElement('canvas');
-		textCanvas.width = 1024; textCanvas.height = 256;
-		const textCtx = textCanvas.getContext('2d')!;
-		function redrawText(t: { value: string }){
-			textCtx.clearRect(0,0,textCanvas.width,textCanvas.height);
-			textCtx.fillStyle = 'white';
-			textCtx.font = '700 120px Poppins';
-			textCtx.textBaseline = 'middle';
-			textCtx.fillText(t.value || '', 32, textCanvas.height/2);
-			gl.bindTexture(gl.TEXTURE_2D, textTex);
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textCanvas);
-		}
-		if (text.enabled) redrawText(text);
+		const textCanvas = document.createElement('canvas'); textCanvas.width = 1024; textCanvas.height = 256; const textCtx = textCanvas.getContext('2d')!;
+		function redrawText(t: { value: string }){ textCtx.clearRect(0,0,textCanvas.width,textCanvas.height); textCtx.fillStyle = 'white'; textCtx.font = '700 120px Poppins'; textCtx.textBaseline = 'middle'; textCtx.fillText(t.value || '', 32, textCanvas.height/2); gl.bindTexture(gl.TEXTURE_2D, textTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textCanvas);} if (text.enabled) redrawText(text);
 
-		let raf = 0; const times: number[] = []; const t0 = performance.now(); let running = true;
+		let raf = 0; const times: number[] = []; let last = performance.now(); let running = true;
 		function resize() { const dpr = Math.min(window.devicePixelRatio||1,2); const w = canvas.clientWidth*dpr; const h = canvas.clientHeight*dpr; if (canvas.width!==w||canvas.height!==h) { canvas.width=w; canvas.height=h; gl.viewport(0,0,w,h);} }
-		function mixFromTimeline(elapsed: number){ const keys = timeline.keyframes; if(keys.length===0) return 0; const T = (elapsed % 1 + 1) % 1; let prev = keys[0]; for (let i=1;i<keys.length;i++){ const cur = keys[i]; if (T<=cur.t){ const span = cur.t - prev.t || 1; const local = (T - prev.t)/span; return prev.mix*(1-local)+cur.mix*local; } prev = cur; } return keys[keys.length-1].mix; }
+		function mixAt(t: number){ const keys = timeline.keyframes; if(keys.length===0) return 0; let prev = keys[0]; for (let i=1;i<keys.length;i++){ const cur = keys[i]; if (t<=cur.t){ const span = cur.t - prev.t || 1; const local = (t - prev.t)/span; return prev.mix*(1-local)+cur.mix*local; } prev = cur; } return keys[keys.length-1].mix; }
 		const loop = () => {
 			if (!running) { raf = requestAnimationFrame(loop); return; }
 			resize();
-			// Base pass
+			const now = performance.now(); const dt = Math.min(0.1, (now - last) / 1000); last = now;
+			if (play.playing) { const nt = (play.t + dt) % 1; setPlayhead(nt); }
+			const mix = media.secondary ? mixAt(play.t) : 1.0;
+
 			gl.useProgram(baseProg);
 			gl.uniform2f(gl.getUniformLocation(baseProg, 'uRes'), canvas.width, canvas.height);
-			gl.uniform1f(gl.getUniformLocation(baseProg, 'uTime'), performance.now()/1000);
-			const elapsed = (performance.now()-t0)/1000; gl.uniform1f(gl.getUniformLocation(baseProg, 'uMix'), media.secondary ? mixFromTimeline(elapsed) : 1.0);
+			gl.uniform1f(gl.getUniformLocation(baseProg, 'uTime'), now/1000);
+			gl.uniform1f(gl.getUniformLocation(baseProg, 'uMix'), mix);
 			gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex0); const loc0 = gl.getUniformLocation(baseProg,'uTex0'); if(loc0) gl.uniform1i(loc0,0);
 			if (media.secondary){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex1); const loc1 = gl.getUniformLocation(baseProg,'uTex1'); if(loc1) gl.uniform1i(loc1,1); }
-			const p = effect.params as any;
-			let zoomStrength = p.zoomStrength ?? 0.8;
-			let samples = Math.max(1, Math.min(32, Math.floor(p.samples ?? 16)));
-			if (fps < 30 && media.secondary) { if (samples > 8) { samples = 8; if (!tip) { setTip('Performance: reduced samples to keep 30fps'); setTimeout(()=>setTip(null), 2000); } } }
-			const locP = gl.getUniformLocation(baseProg,'uParams'); if(locP) gl.uniform4f(locP, p.dotScale ?? zoomStrength, p.angleRad ?? samples, p.contrast ?? 1, p.invert01 ?? 0);
+			const p = effect.params as any; let zoomStrength = p.zoomStrength ?? 0.8; let samples = Math.max(1, Math.min(32, Math.floor(p.samples ?? 16))); if (fps < 30 && media.secondary) { if (samples > 8) { samples = 8; if (!tip) { setTip('Performance: reduced samples to keep 30fps'); setTimeout(()=>setTip(null), 2000); } } } const locP = gl.getUniformLocation(baseProg,'uParams'); if(locP) gl.uniform4f(locP, p.dotScale ?? zoomStrength, p.angleRad ?? samples, p.contrast ?? 1, p.invert01 ?? 0);
 			gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-			// Text pass
-			if (text.enabled && text.value) {
-				redrawText(text);
-				gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-				gl.useProgram(textProg);
-				gl.uniform2f(gl.getUniformLocation(textProg, 'uRes'), canvas.width, canvas.height);
-				gl.uniform1f(gl.getUniformLocation(textProg, 'uTime'), performance.now()/1000);
-				const tp = text.params;
-				gl.uniform4f(gl.getUniformLocation(textProg,'uParams'), tp.amp, tp.freq, tp.speed, tp.outlinePx);
-				gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, textTex);
-				const lt = gl.getUniformLocation(textProg,'uTextTex'); if (lt) gl.uniform1i(lt,2);
-				gl.uniform1f(gl.getUniformLocation(textProg,'uMix'), 1.0);
-				gl.drawArrays(gl.TRIANGLES, 0, 3);
-				gl.disable(gl.BLEND);
-			}
+			if (text.enabled && text.value) { redrawText(text); gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.useProgram(textProg); gl.uniform2f(gl.getUniformLocation(textProg, 'uRes'), canvas.width, canvas.height); gl.uniform1f(gl.getUniformLocation(textProg, 'uTime'), now/1000); const tp = text.params; gl.uniform4f(gl.getUniformLocation(textProg,'uParams'), tp.amp, tp.freq, tp.speed, tp.outlinePx); gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, textTex); const lt = gl.getUniformLocation(textProg,'uTextTex'); if (lt) gl.uniform1i(lt,2); gl.uniform1f(gl.getUniformLocation(textProg,'uMix'), 1.0); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disable(gl.BLEND); }
 
-			times.push(performance.now()); if(times.length>120) times.shift(); const f = Math.round(fpsFromSamples(times)); setFpsLocal(f); publishFps(f);
+			times.push(now); if(times.length>120) times.shift(); const f = Math.round(fpsFromSamples(times)); setFpsLocal(f); publishFps(f);
 			raf = requestAnimationFrame(loop);
 		};
 		rAF(); function rAF(){ raf = requestAnimationFrame(loop); }
@@ -104,7 +78,7 @@ export default function CanvasHost() {
 		function vis(){ running = document.visibilityState === 'visible'; }
 		document.addEventListener('visibilitychange', vis);
 		return () => { cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', vis); };
-	}, [media.primary?.src, media.secondary?.src, effect.params, publishFps, timeline.keyframes, fps, tip, text.enabled, text.value, text.params]);
+	}, [media.primary?.src, media.secondary?.src, effect.params, publishFps, timeline.keyframes, fps, tip, text.enabled, text.value, text.params, play.playing, play.t, setPlayhead]);
 
 	return (
 		<div className="relative w-full h-full">
