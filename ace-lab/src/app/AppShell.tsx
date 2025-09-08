@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 const tabs = ['Lab', 'Agents', 'Library'] as const;
 type TabKey = typeof tabs[number];
 
-export function AppShell({ children, rightSlot }: PropsWithChildren & { rightSlot?: React.ReactNode }) {
+export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6 }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void }) {
 	const [active, setActive] = useState<TabKey>('Lab');
 
 	return (
@@ -29,9 +29,9 @@ export function AppShell({ children, rightSlot }: PropsWithChildren & { rightSlo
 						))}
 					</nav>
 					<div className="flex items-center gap-2">
-						<button className="btn-primary">Export</button>
-						<button className="btn-primary">Record 3s</button>
-						<button className="btn-primary">Record 6s</button>
+						<button className="btn-primary" onClick={onExport}>Export</button>
+						<button className="btn-primary" onClick={onRecord3}>Record 3s</button>
+						<button className="btn-primary" onClick={onRecord6}>Record 6s</button>
 					</div>
 				</div>
 			</header>
