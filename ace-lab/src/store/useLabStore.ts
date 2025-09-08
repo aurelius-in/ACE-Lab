@@ -11,6 +11,7 @@ type LabState = {
 	fps: number; gpuMs?: number;
 	device: 'mobile'|'desktop';
 	presets: Preset[];
+	editCount: number;
 	setEffectParam: (k: string, v: number) => void;
 	applyPreset: (p: Preset) => void;
 	record: (seconds: number) => Promise<void>;
@@ -31,13 +32,42 @@ export const useLabStore = create<LabState>((set, get) => ({
 		{ id: 'halftone-soft', name: 'Soft Halftone', params: { dotScale: 10, angleRad: 0.5, contrast: 0.9, invert01: 0 } },
 		{ id: 'halftone-bold', name: 'Bold Halftone', params: { dotScale: 6, angleRad: 0.8, contrast: 1.3, invert01: 0 } },
 	],
-	setEffectParam: (k, v) => set((s) => ({ effect: { ...s.effect, params: { ...s.effect.params, [k]: v } } })),
+	editCount: 0,
+	setEffectParam: (k, v) => set((s) => {
+		const next = { effect: { ...s.effect, params: { ...s.effect.params, [k]: v } }, editCount: s.editCount + 1 } as Partial<LabState> as any;
+		// After 10 edits, ensure at least two suggested presets exist
+		if (s.editCount + 1 === 10 && s.presets.length < 2) {
+			next.presets = [
+				...(s.presets ?? []),
+				{ id: 'suggest-1', name: 'ACE Warm Print', params: { dotScale: 9, angleRad: 0.55, contrast: 1.1, invert01: 0 } },
+				{ id: 'suggest-2', name: 'Mobile Safe', params: { dotScale: 12, angleRad: 0.6, contrast: 0.95, invert01: 0 } },
+			];
+		}
+		return next;
+	}),
 	applyPreset: (p) => set(() => ({ effect: { id: p.id, params: p.params, mix: 0 } })),
 	record: async () => { /* handled in App for now */ },
 	runAgent: async (name) => {
 		if (name === 'TransitionAgent') {
 			const keys = [ { t: 0.0, mix: 0 }, { t: 0.5, mix: 1 }, { t: 1.0, mix: 0 } ];
 			set(() => ({ timeline: { keyframes: keys } }));
+		} else if (name === 'PresetAgent') {
+			const s = get();
+			if (s.presets.filter(p=>p.id.startsWith('ai-')).length === 0) {
+				set({ presets: [...s.presets, { id: 'ai-contrast', name: 'ACE Contrast Pop', params: { dotScale: 7, angleRad: 0.7, contrast: 1.25, invert01: 0 } }, { id: 'ai-retro', name: 'Retro Orchid', params: { dotScale: 11, angleRad: 0.4, contrast: 0.9, invert01: 0 } }] });
+			}
+		} else if (name === 'PerfAgent') {
+			// Reduce cross-zoom samples ~30% when secondary present
+			const s = get();
+			if (s.media.secondary) {
+				const params = { ...s.effect.params } as any;
+				if (typeof params.samples === 'number') {
+					params.samples = Math.max(8, Math.floor(params.samples * 0.7));
+				} else {
+					params.samples = 8;
+				}
+				set({ effect: { ...s.effect, params } });
+			}
 		}
 	},
 	setFps: (n) => set(() => ({ fps: n })),
