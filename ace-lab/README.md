@@ -1,6 +1,6 @@
 # ACE Lab
 
-<p align="center"><img src="./ace-lab.png" width="25%" alt="ACE Lab logo"></p>
+<p align="center"><img src="../ace-lab.gif" width="30%" alt="ACE Lab logo"></p>
 
 Agentic Creative Experience Lab scaffolded with Vite + React + TypeScript and Tailwind CSS. Brand styles use the ACE gradient and dark UI.
 
