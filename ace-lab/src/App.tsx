@@ -2,7 +2,7 @@ import './index.css'
 import './styles.css'
 import AppShell, { TabKey } from './app/AppShell'
 import CanvasHost from './lab/CanvasHost'
-import ControlsPanel from './lab/ControlsPanel'
+import RightPanelTabs from './lab/RightPanelTabs'
 import TimelinePanel from './lab/TimelinePanel'
 import { captureCanvasWebm } from './utils/media'
 import { useState } from 'react'
@@ -27,7 +27,7 @@ function App() {
 
 	return (
 		<AppShell
-			rightSlot={<ControlsPanel />}
+			rightSlot={<RightPanelTabs />}
 			onExport={handleExport}
 			onRecord3={() => handleRecord(3)}
 			onRecord6={() => handleRecord(6)}

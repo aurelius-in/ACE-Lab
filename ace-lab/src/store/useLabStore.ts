@@ -23,7 +23,10 @@ export const useLabStore = create<LabState>((set) => ({
 	effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0 }, mix: 0 },
 	timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] },
 	fps: 60,
-	presets: [],
+	presets: [
+		{ id: 'halftone-soft', name: 'Soft Halftone', params: { dotScale: 10, angleRad: 0.5, contrast: 0.9, invert01: 0 } },
+		{ id: 'halftone-bold', name: 'Bold Halftone', params: { dotScale: 6, angleRad: 0.8, contrast: 1.3, invert01: 0 } },
+	],
 	setEffectParam: (k, v) => set((s) => ({ effect: { ...s.effect, params: { ...s.effect.params, [k]: v } } })),
 	applyPreset: (p) => set(() => ({ effect: { id: p.id, params: p.params, mix: 0 } })),
 	record: async () => { /* handled in App for now */ },
