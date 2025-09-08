@@ -34,6 +34,14 @@ npm run dev
 - PolicyAgent blocks 4K on Mobile and fixes to 1080p
 - After 10 edits, PresetAgent suggests ≥2 presets
 
+### Policy WASM build
+
+Compile Rego to WASM (requires OPA CLI) and place it in `public/policy/policy.wasm`:
+
+```
+opa build -t wasm -e ace/policy/allow -o public/policy/policy.wasm src/policy/rules.rego
+```
+
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

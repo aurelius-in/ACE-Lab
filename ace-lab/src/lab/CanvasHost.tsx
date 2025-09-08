@@ -6,7 +6,7 @@ import HALFTONE_SRC from '../shaders/blocks/halftone.frag?raw';
 // @ts-ignore
 import CROSS_SRC from '../shaders/blocks/crosszoom.frag?raw';
 // @ts-ignore
-import TEXTWAVE_SRC from '../shaders/blocks/textwave.frag?raw';
+import TEXT_SDF_SRC from '../shaders/blocks/text_sdf.frag?raw';
 // @ts-ignore
 import BLUR_SRC from '../shaders/blocks/blur.frag?raw';
 // @ts-ignore
@@ -35,7 +35,7 @@ export default function CanvasHost() {
 		const program = (g: WebGL2RenderingContext, fsSrc: string) => { const vs = compile(g, g.VERTEX_SHADER, VERT_SRC as string); const fs = compile(g, g.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${fsSrc}`); const p = g.createProgram()!; g.attachShader(p, vs); g.attachShader(p, fs); g.linkProgram(p); return p; };
 
 		const baseProg = program(gl, (effect.id === 'crosszoom' && !!media.secondary) ? CROSS_SRC : HALFTONE_SRC);
-		const textProg = program(gl, TEXTWAVE_SRC);
+		const textProg = program(gl, TEXT_SDF_SRC);
 		const blurProg = program(gl, BLUR_SRC);
 		const postProg = program(gl, POST_SRC);
 
@@ -49,22 +49,37 @@ export default function CanvasHost() {
 		const upload = (g: WebGL2RenderingContext, url: string, to: WebGLTexture) => { const i=new Image(); i.crossOrigin='anonymous'; i.onload=()=>{ g.bindTexture(g.TEXTURE_2D,to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,i); }; i.src=url; };
 		upload(gl, media.primary?.src || '/ace-lab.webp', tex0); if (media.secondary) upload(gl, media.secondary.src, tex1);
 
+		// Generate SDF atlas for the whole text string using tiny-sdf
+		async function buildSdfTexture() {
+			const { default: TinySDF } = await import('tiny-sdf');
+			const sdf = new (TinySDF as any)(48, 3, 8, 0.25, 'Poppins');
+			const str = text.value || '';
+			const pad = 8; const w = 1024, h = 256; const canvas2 = document.createElement('canvas'); canvas2.width = w; canvas2.height = h; const ctx2 = canvas2.getContext('2d')!; ctx2.clearRect(0,0,w,h);
+			let x = 32; const y = h/2 + 16;
+			for (const ch of str) {
+				const glyph = sdf.draw(ch);
+				const img = new ImageData(new Uint8ClampedArray(glyph), sdf.size, sdf.size);
+				const off = document.createElement('canvas'); off.width = sdf.size; off.height = sdf.size; off.getContext('2d')!.putImageData(img, 0, 0);
+				ctx2.drawImage(off, x, y - sdf.size/2);
+				x += sdf.size + pad;
+			}
+			gl.bindTexture(gl.TEXTURE_2D, textTex);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas2);
+		}
+		buildSdfTexture();
+
 		// offscreen and ping-pong
 		const rtTex = makeTex(gl), ping = makeTex(gl), pong = makeTex(gl);
 		const fbo = gl.createFramebuffer()!, fbo2 = gl.createFramebuffer()!;
 		const resizeRT = () => { [rtTex, ping, pong].forEach(t=>{ gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA, c.width, c.height,0,gl.RGBA,gl.UNSIGNED_BYTE,null); }); };
-
-		const textCanvas = document.createElement('canvas'); textCanvas.width = 1024; textCanvas.height = 256; const textCtx = textCanvas.getContext('2d') as CanvasRenderingContext2D;
-		const redrawText = (t: { value: string }) => { textCtx.clearRect(0,0,textCanvas.width,textCanvas.height); textCtx.fillStyle = 'white'; textCtx.font = '700 120px Poppins'; textCtx.textBaseline = 'middle'; textCtx.fillText(t.value || '', 32, textCanvas.height/2); gl.bindTexture(gl.TEXTURE_2D, textTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textCanvas); };
-		if (text.enabled) redrawText(text);
 
 		let raf = 0; const times: number[] = []; let last = performance.now(); let running = true;
 		const resize = () => { const dpr = Math.min(window.devicePixelRatio||1,2); const w = c.clientWidth*dpr; const h = c.clientHeight*dpr; if (c.width!==w||c.height!==h) { c.width=w; c.height=h; gl.viewport(0,0,w,h); resizeRT(); } };
 		const mixAt = (t: number) => { const keys = timeline.keyframes; if(keys.length===0) return 0; let prev = keys[0]; for (let i=1;i<keys.length;i++){ const cur = keys[i]; if (t<=cur.t){ const span = cur.t - prev.t || 1; const local = (t - prev.t)/span; return prev.mix*(1-local)+cur.mix*local; } prev = cur; } return keys[keys.length-1].mix; };
 
 		// LUT upload (optional)
-		let lutTex: WebGLTexture | undefined;
-		if ((useLabStore.getState().assets?.lutSrc)) { lutTex = makeTex(gl); upload(gl, useLabStore.getState().assets!.lutSrc!, lutTex); }
+		let lutTex: WebGLTexture | undefined; const st = useLabStore.getState();
+		if ((st.assets?.lutSrc)) { lutTex = makeTex(gl); upload(gl, st.assets!.lutSrc!, lutTex); }
 
 		const loop = () => {
 			if (!running) { raf = requestAnimationFrame(loop); return; }
@@ -91,8 +106,8 @@ export default function CanvasHost() {
 			gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, pong, 0);
 			gl.uniform2f(gl.getUniformLocation(blurProg,'uDir'), 0, 1); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, ping); if(b0) gl.uniform1i(b0,0); gl.drawArrays(gl.TRIANGLES,0,3);
 
-			// text on pong
-			if (text.enabled && text.value) { redrawText(text); gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.useProgram(textProg); gl.uniform2f(gl.getUniformLocation(textProg, 'uRes'), c.width, c.height); gl.uniform1f(gl.getUniformLocation(textProg, 'uTime'), now/1000); const tp = text.params; gl.uniform4f(gl.getUniformLocation(textProg,'uParams'), tp.amp, tp.freq, tp.speed, tp.outlinePx); gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, textTex); const lt = gl.getUniformLocation(textProg,'uTextTex'); if (lt) gl.uniform1i(lt,2); gl.uniform1f(gl.getUniformLocation(textProg,'uMix'), 1.0); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disable(gl.BLEND); }
+			// text on pong with SDF
+			if (text.enabled && text.value) { gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.useProgram(textProg); gl.uniform2f(gl.getUniformLocation(textProg, 'uRes'), c.width, c.height); gl.uniform1f(gl.getUniformLocation(textProg, 'uTime'), now/1000); const tp = text.params; gl.uniform4f(gl.getUniformLocation(textProg,'uParams'), tp.amp, tp.freq, tp.speed, tp.outlinePx); gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, textTex); const lt = gl.getUniformLocation(textProg,'uTextTex'); if (lt) gl.uniform1i(lt,2); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disable(gl.BLEND); }
 
 			// post to screen (combine pong into rtTex with bloomStrength and LUT)
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -113,13 +128,12 @@ export default function CanvasHost() {
 		function vis(){ running = document.visibilityState === 'visible'; }
 		document.addEventListener('visibilitychange', vis);
 		return () => { cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', vis); };
-	}, [media.primary?.src, media.secondary?.src, effect.id, effect.params, publishFps, timeline.keyframes, fps, tip, text.enabled, text.value, text.params, play.playing, play.t, setPlayhead]);
+	}, [media.primary?.src, media.secondary?.src, effect.id, effect.params, publishFps, timeline.keyframes, fps, text.enabled, text.value, text.params, play.playing, play.t, setPlayhead]);
 
 	return (
 		<div className="relative w-full h-full">
 			<canvas ref={canvasRef} className="w-full h-full rounded-2xl" aria-label="editor preview" />
 			<div className="absolute top-2 left-2 text-xs px-2 py-1 rounded-full bg-black/60 border border-white/10">{fps} fps</div>
-			{tip && (<div className="absolute top-2 right-2 text-xs px-2 py-1 rounded-full bg-black/60 border border-white/10">{tip}</div>)}
 		</div>
 	)
 }
