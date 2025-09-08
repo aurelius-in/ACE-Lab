@@ -14,11 +14,12 @@ type LabState = {
 	record: (seconds: number) => Promise<void>;
 	runAgent: (name: string, input?: unknown) => Promise<void>;
 	setFps: (n: number) => void;
+	setPrimary: (src: string) => void;
 };
 
 export const useLabStore = create<LabState>((set) => ({
 	media: {},
-	effect: { id: 'halftone', params: { u0: 0.5, u1: 0.5, u2: 0.5, u3: 0.5 }, mix: 0 },
+	effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0 }, mix: 0 },
 	timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] },
 	fps: 60,
 	presets: [],
@@ -37,6 +38,7 @@ export const useLabStore = create<LabState>((set) => ({
 		}
 	},
 	setFps: (n) => set(() => ({ fps: n })),
+	setPrimary: (src) => set((s) => ({ media: { ...s.media, primary: { kind: 'image', src } } })),
 }));
 
 
