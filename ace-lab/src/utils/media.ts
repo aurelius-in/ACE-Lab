@@ -27,8 +27,7 @@ export async function captureScaledWebmFromCanvas(source: HTMLCanvasElement, tar
 	const h = Math.round(source.height * scale);
 	const off = document.createElement('canvas');
 	off.width = w; off.height = h;
-	const ctx = off.getContext('2d');
-	if (!ctx) throw new Error('2D context not available');
+	const ctx = off.getContext('2d') as CanvasRenderingContext2D;
 	const stream = (off as any).captureStream ? (off as any).captureStream(60) : null;
 	if (!stream) throw new Error('captureStream not supported');
 	const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
