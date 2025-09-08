@@ -12,6 +12,7 @@ export function AppShell({ children }: PropsWithChildren) {
 			<header className="sticky top-0 z-10 backdrop-blur-sm">
 				<div className="container mx-auto flex items-center justify-between py-4">
 					<div className="relative flex items-center gap-3">
+						<img src="/ace-icon.gif" alt="ACE icon" className="w-8 h-8 rounded-xl border border-white/10" />
 						<div className="relative">
 							<div className="ace-glow absolute inset-0" />
 							<div className="w-9 h-9 rounded-2xl border border-white/10 grid place-items-center">
