@@ -29,6 +29,7 @@ type LabState = {
 	briefPrompt: string;
 	qa?: { fps: number };
 	setEffectParam: (k: string, v: number) => void;
+	setEffectId: (id: string) => void;
 	applyPreset: (p: Preset) => void;
 	record: (seconds: number) => Promise<void>;
 	runAgent: (name: string, input?: unknown) => Promise<void>;
@@ -48,6 +49,7 @@ type LabState = {
 	togglePlay: () => void;
 	buildStylePack: () => StylePack;
 	applyStylePack: (sp: StylePack) => void;
+	resetDefaults: () => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -75,6 +77,20 @@ export const useLabStore = create<LabState>((set, get) => ({
 			];
 		}
 		return next;
+	}),
+	setEffectId: (id) => set((s)=> {
+		const current = s.effect;
+		let params = { ...current.params };
+		if (id === 'crosszoom') {
+			params.zoomStrength = params.zoomStrength ?? 0.8;
+			params.samples = params.samples ?? 16;
+		} else if (id === 'halftone') {
+			params.dotScale = params.dotScale ?? 8;
+			params.angleRad = params.angleRad ?? 0.6;
+			params.contrast = params.contrast ?? 1.0;
+			params.invert01 = params.invert01 ?? 0;
+		}
+		return { effect: { ...current, id, params } } as Partial<LabState> as any;
 	}),
 	applyPreset: (p) => set(() => ({ effect: { id: p.id, params: p.params, mix: 0 } })),
 	record: async () => { /* handled in App for now */ },
@@ -128,6 +144,13 @@ export const useLabStore = create<LabState>((set, get) => ({
 		return { palette: ['#6E00FF', '#A83CF0', '#FF4BB5'], blocks: [s.effect.id], params: s.effect.params, timeline: s.timeline.keyframes };
 	},
 	applyStylePack: (sp) => set(() => ({ effect: { id: sp.blocks[0] || 'halftone', params: sp.params, mix: 0 }, timeline: { keyframes: sp.timeline } })),
+	resetDefaults: () => set(() => ({
+		effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0 }, mix: 0 },
+		timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] },
+		play: { t: 0, playing: true },
+		text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 } },
+		exportSettings: {},
+	}))
 }));
 
 
