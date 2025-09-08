@@ -11,6 +11,8 @@ type LabState = {
 	presets: Preset[];
 	setEffectParam: (k: string, v: number) => void;
 	applyPreset: (p: Preset) => void;
+	record: (seconds: number) => Promise<void>;
+	runAgent: (name: string, input?: unknown) => Promise<void>;
 };
 
 export const useLabStore = create<LabState>((set) => ({
@@ -21,6 +23,18 @@ export const useLabStore = create<LabState>((set) => ({
 	presets: [],
 	setEffectParam: (k, v) => set((s) => ({ effect: { ...s.effect, params: { ...s.effect.params, [k]: v } } })),
 	applyPreset: (p) => set(() => ({ effect: { id: p.id, params: p.params, mix: 0 } })),
+	record: async () => { /* handled in App for now */ },
+	runAgent: async (name) => {
+		if (name === 'TransitionAgent') {
+			// Simple stub: generate cross-zoom keyframes
+			const keys = [
+				{ t: 0.0, mix: 0 },
+				{ t: 0.5, mix: 1 },
+				{ t: 1.0, mix: 0 },
+			];
+			set(() => ({ timeline: { keyframes: keys } }));
+		}
+	},
 }));
 
 

@@ -1,7 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { fpsFromSamples } from '../utils/perf';
+import { useLabStore } from '../store/useLabStore';
 
 export default function CanvasHost() {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const setFps = useLabStore(s => s.fps);
+  const [fps, setFpsLocal] = useState(60);
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -22,12 +26,18 @@ export default function CanvasHost() {
 			gl.clearColor(0.04, 0.05, 0.07, 1);
 			gl.clear(gl.COLOR_BUFFER_BIT);
 		};
-		const loop = () => { resize(); clear(); raf = requestAnimationFrame(loop); };
+		const times: number[] = [];
+		const loop = () => { resize(); clear(); times.push(performance.now()); if(times.length>120) times.shift(); setFpsLocal(Math.round(fpsFromSamples(times))); raf = requestAnimationFrame(loop); };
 		renderQueueMicrotask(() => loop());
 		return () => cancelAnimationFrame(raf);
 	}, []);
 
-	return <canvas ref={canvasRef} className="w-full h-full rounded-2xl" aria-label="editor preview" />
+	return (
+		<div className="relative w-full h-full">
+			<canvas ref={canvasRef} className="w-full h-full rounded-2xl" aria-label="editor preview" />
+			<div className="absolute top-2 left-2 text-xs px-2 py-1 rounded-full bg-black/60 border border-white/10">{fps} fps</div>
+		</div>
+	)
 }
 
 function renderQueueMicrotask(fn: () => void) { Promise.resolve().then(fn); }

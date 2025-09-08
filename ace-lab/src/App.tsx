@@ -6,9 +6,11 @@ import ControlsPanel from './lab/ControlsPanel'
 import TimelinePanel from './lab/TimelinePanel'
 import { captureCanvasWebm } from './utils/media'
 import { useState } from 'react'
+import { useLabStore } from './store/useLabStore'
 
 function App() {
 	const [tab, setTab] = useState<TabKey>('Lab')
+	const runAgent = useLabStore(s => s.runAgent)
 
 	async function handleExport() {
 		alert('Export action placeholder')
@@ -38,7 +40,7 @@ function App() {
 						<CanvasHost />
 					</div>
 					<div className="flex justify-end mt-3">
-						<button className="btn-primary">Auto-compose</button>
+						<button className="btn-primary" onClick={() => runAgent('TransitionAgent')}>Auto-compose</button>
 					</div>
 					<TimelinePanel />
 				</>
