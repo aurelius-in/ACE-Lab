@@ -5,7 +5,7 @@ import CanvasHost from './lab/CanvasHost'
 import RightPanelTabs from './lab/RightPanelTabs'
 import TimelinePanel from './lab/TimelinePanel'
 import LibraryPanel from './lab/LibraryPanel'
-import { captureCanvasWebm } from './utils/media'
+import { captureCanvasWebm, captureScaledWebmFromCanvas } from './utils/media'
 import { useState } from 'react'
 import { useLabStore } from './store/useLabStore'
 
@@ -19,12 +19,14 @@ function App() {
 	async function handleExport() {
 		const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
 		if (!canvas) return alert('Nothing to export')
-		const { allowed, message } = check(canvas.width, canvas.height)
-		if (!allowed) {
-			alert(message)
-			return
+		const res = check(canvas.width, canvas.height)
+		let blob: Blob
+		if (!res.allowed && device === 'mobile') {
+			const fixed = res.fix ? res.fix() : { width: 1920, height: Math.round(1920 / canvas.width * canvas.height) }
+			blob = await captureScaledWebmFromCanvas(canvas, fixed.width, 3)
+		} else {
+			blob = await captureCanvasWebm(canvas, 3)
 		}
-		const blob = await captureCanvasWebm(canvas, 3)
 		const url = URL.createObjectURL(blob)
 		const a = document.createElement('a')
 		a.href = url; a.download = `ace-export.webm`; a.click()
