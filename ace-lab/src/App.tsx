@@ -1,6 +1,6 @@
 import './index.css'
 import './styles.css'
-import AppShell, { TabKey } from './app/AppShell'
+import AppShell, { type TabKey } from './app/AppShell'
 import CanvasHost from './lab/CanvasHost'
 import RightPanelTabs from './lab/RightPanelTabs'
 import TimelinePanel from './lab/TimelinePanel'
