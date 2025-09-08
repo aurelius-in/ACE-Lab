@@ -18,6 +18,7 @@ type TextParams = { amp: number; freq: number; speed: number; outlinePx: number 
 type LabState = {
 	media: { primary?: TexSource; secondary?: TexSource };
 	effect: { id: string; params: Record<string, number>; mix: number };
+	assets?: { lutSrc?: string };
 	timeline: { keyframes: { t: number; mix: number }[] };
 	play: { t: number; playing: boolean };
 	fps: number; gpuMs?: number;
@@ -38,7 +39,7 @@ type LabState = {
 	setSecondary: (src: string) => void;
 	clearPrimary: () => void;
 	clearSecondary: () => void;
-	exportPolicyCheck: (w: number, h: number) => { allowed: boolean; message?: string; fix?: () => { width: number; height: number } };
+	exportPolicyCheck: (w: number, h: number) => Promise<{ allowed: boolean; message?: string; fix?: () => { width: number; height: number } }>;
 	setTextValue: (t: string) => void;
 	setTextParam: (k: keyof TextParams, v: number) => void;
 	toggleText: (on: boolean) => void;
@@ -55,7 +56,7 @@ type LabState = {
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
-	media: {},
+	media: {}, assets: {},
 	effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0, bloomStrength: 0.25, lutAmount: 0.2 }, mix: 0 },
 	timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] },
 	play: { t: 0, playing: true },
@@ -102,7 +103,19 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setSecondary: (src) => set((s) => ({ media: { ...s.media, secondary: { kind: 'image', src } } })),
 	clearPrimary: () => set((s) => ({ media: { ...s.media, primary: undefined } })),
 	clearSecondary: () => set((s) => ({ media: { ...s.media, secondary: undefined } })),
-	exportPolicyCheck: (w, h) => { const res = checkPolicy({ width: w, height: h, device: get().device }); if (res.allowed) return { allowed: true }; const fix = res.fixes?.[0]; return { allowed: false, message: res.violations[0], fix: fix ? () => fix.apply({ width: w, height: h, device: get().device }) : undefined }; },
+	exportPolicyCheck: async (w, h) => {
+		try {
+			const { checkWithOpa } = await import('../policy/opa');
+			const out = await checkWithOpa({ width: w, height: h, device: get().device });
+			if (out.allowed) return { allowed: true };
+			return { allowed: false, message: out.violations[0], fix: () => ({ width: 1920, height: Math.round(1920 / w * h) }) };
+		} catch {
+			const res = checkPolicy({ width: w, height: h, device: get().device });
+			if (res.allowed) return { allowed: true };
+			const fix = res.fixes?.[0];
+			return { allowed: false, message: res.violations[0], fix: fix ? () => fix.apply({ width: w, height: h, device: get().device }) : undefined };
+		}
+	},
 	setTextValue: (t) => set((s)=> ({ text: { ...s.text, value: t } })),
 	setTextParam: (k, v) => set((s)=> ({ text: { ...s.text, params: { ...s.text.params, [k]: v } } })),
 	toggleText: (on) => set((s)=> ({ text: { ...s.text, enabled: on } })),
