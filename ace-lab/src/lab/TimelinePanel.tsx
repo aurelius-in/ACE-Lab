@@ -9,7 +9,7 @@ export default function TimelinePanel() {
 	const togglePlay = useLabStore(s => s.togglePlay);
 	const barRef = useRef<HTMLDivElement|null>(null);
 
-	function onDown(e: React.MouseEvent, idx: number){
+	function onDown(_e: React.MouseEvent, idx: number){
 		const bar = barRef.current; if (!bar) return;
 		const rect = bar.getBoundingClientRect();
 		function move(ev: MouseEvent){
