@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "4000:4000"
+  web:
+    image: node:18-alpine
+    working_dir: /app
+    ports:
+      - "4173:4173"
+    volumes:
+      - ./:/app
+    command: sh -c "npm ci && npm run build && npx vite preview --host --port 4173"
+    depends_on:
+      - server
