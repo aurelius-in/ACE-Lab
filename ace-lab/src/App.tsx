@@ -60,6 +60,17 @@ function App() {
 		URL.revokeObjectURL(url)
 	}
 
+	async function handleExportGif(){
+		const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
+		if (!canvas) return
+		const { captureCanvasGif } = await import('./utils/media')
+		const blob = await captureCanvasGif(canvas, 3, 12)
+		const url = URL.createObjectURL(blob)
+		const a = document.createElement('a')
+		a.href = url; a.download = `ace-export.webp`; a.click()
+		URL.revokeObjectURL(url)
+	}
+
 	useEffect(() => {
 		function onKey(e: KeyboardEvent){
 			if (e.target && (e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
@@ -97,6 +108,7 @@ function App() {
 					</div>
 					<div className="flex justify-end mt-3">
 						<button className="btn-primary" onClick={() => runAgent('TransitionAgent')}>Auto-compose</button>
+						<button className="btn-primary ml-2" onClick={handleExportGif}>Export GIF</button>
 					</div>
 					<TimelinePanel />
 				</>

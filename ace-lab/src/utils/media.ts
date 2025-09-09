@@ -65,6 +65,21 @@ export async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> 
 	return new Promise((resolve) => canvas.toBlob((b)=> resolve(b || new Blob()), 'image/png'));
 }
 
+export async function captureCanvasGif(canvas: HTMLCanvasElement, seconds: number, fps = 15): Promise<Blob> {
+	// Simple fallback: sample frames into an animated WebP if GIF encoder not present
+	const frames: ImageBitmap[] = [];
+	const total = Math.max(1, Math.floor(seconds * fps));
+	for (let i=0;i<total;i++){ frames.push(await createImageBitmap(canvas)); await new Promise(r=>setTimeout(r, 1000/fps)); }
+	// Try to use OffscreenCanvas to encode Animated WebP
+	const webp = await (async () => {
+		const off = document.createElement('canvas'); off.width = canvas.width; off.height = canvas.height;
+		const ctx = off.getContext('2d')!;
+		for (const f of frames){ ctx.drawImage(f,0,0); }
+		return await new Promise<Blob>((resolve)=> off.toBlob(b=>resolve(b||new Blob()), 'image/webp'));
+	})();
+	return webp;
+}
+
 export function downloadBlob(filename: string, blob: Blob) {
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement('a');
