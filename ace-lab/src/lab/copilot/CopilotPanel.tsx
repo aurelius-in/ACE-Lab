@@ -10,12 +10,16 @@ export default function CopilotPanel(){
 		const { runPipeline } = await import('../../agents/pipeline');
 		await runPipeline();
 	}
+	async function applyAceLook(){
+		const { applyAceLook } = await import('../../agents/pipeline');
+		await applyAceLook();
+	}
 	return (
 		<div className="space-y-3">
 			<div>
 				<label className="block text-sm text-white/70">Brief prompt</label>
 				<textarea value={brief} onChange={(e)=>setBrief(e.target.value)} className="w-full rounded-xl bg-black/30 border border-white/10 p-2" rows={3} />
-				<div className="flex justify-end mt-2 gap-2"><button className="btn-primary" onClick={()=>runAgent('BriefAgent')}>Apply Look Profile</button><button className="btn-primary" onClick={runPipeline}>Run Pipeline</button></div>
+				<div className="flex justify-end mt-2 gap-2"><button className="btn-primary" onClick={()=>runAgent('BriefAgent')}>Apply Look Profile</button><button className="btn-primary" onClick={runPipeline}>Run Pipeline</button><button className="btn-primary" onClick={applyAceLook}>Apply ACE Look</button></div>
 			</div>
 			<div className="space-y-2">
 				<button className="btn-primary w-full" onClick={()=>runAgent('PerfAgent')}>Apply Mobile Safe</button>

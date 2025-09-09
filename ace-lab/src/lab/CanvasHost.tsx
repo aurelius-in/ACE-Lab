@@ -13,6 +13,8 @@ import BLUR_SRC from '../shaders/blocks/blur.frag?raw';
 import POST_SRC from '../shaders/blocks/post.frag?raw';
 // @ts-ignore
 import VERT_SRC from '../shaders/fullscreen.vert?raw';
+// @ts-ignore
+import VHS_SRC from '../shaders/blocks/vhs.frag?raw';
 
 export default function CanvasHost() {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -34,7 +36,7 @@ export default function CanvasHost() {
 		const compile = (g: WebGL2RenderingContext, type: number, src: string) => { const sh = g.createShader(type)!; g.shaderSource(sh, src); g.compileShader(sh); if (!g.getShaderParameter(sh, g.COMPILE_STATUS)) { console.error(g.getShaderInfoLog(sh)); } return sh; };
 		const program = (g: WebGL2RenderingContext, fsSrc: string) => { const vs = compile(g, g.VERTEX_SHADER, VERT_SRC as string); const fs = compile(g, g.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${fsSrc}`); const p = g.createProgram()!; g.attachShader(p, vs); g.attachShader(p, fs); g.linkProgram(p); return p; };
 
-		const baseProg = program(gl, (effect.id === 'crosszoom' && !!media.secondary) ? CROSS_SRC : HALFTONE_SRC);
+		const baseProg = program(gl, (effect.id === 'crosszoom' && !!media.secondary) ? CROSS_SRC : (effect.id === 'vhs' ? VHS_SRC : HALFTONE_SRC));
 		const textProg = program(gl, TEXT_SDF_SRC);
 		const blurProg = program(gl, BLUR_SRC);
 		const postProg = program(gl, POST_SRC);
