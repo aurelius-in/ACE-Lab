@@ -11,6 +11,22 @@ npm install
 npm run dev
 ```
 
+### Backend preset service
+
+Start the simple preset service (CRUD) in another terminal:
+
+```
+# from ace-lab/ace-lab
+npm run server
+```
+
+Windows-friendly dev alias:
+
+```
+# sets PORT then runs in foreground
+npm run dev:server
+```
+
 ## Quick usage
 
 - Load Image A (and optionally Image B) in Effects tab.
@@ -24,6 +40,16 @@ npm run dev
 - Left/Right: Scrub timeline
 - R: Record 3s  •  6: Record 6s
 - E: Export  •  S: Save Style Pack
+- A: Apply ACE Look (pipeline + top preset)
+
+## What’s new (succinct)
+
+- Agents & Policy panels: run agents with a live log; run policy checks and one-click Fix.
+- Settings tab: export bitrate slider and timeline snap-step control.
+- Export polish: progress HUD with Abort; bitrate applied to MediaRecorder.
+- Presets: Export/Import JSON, Save current as preset, optional server sync toggle.
+- Timeline: labeled grid, configurable snapping (Shift finer, Alt coarser) with live percent.
+- Effects: VHS block selectable; LUT support (.cube/.png); SDF text rendering.
 
 ## Acceptance checks (this iteration)
 

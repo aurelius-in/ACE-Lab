@@ -8,6 +8,7 @@ import LibraryPanel from './lab/LibraryPanel'
 import { captureCanvasWebm, captureScaledWebmFromCanvas, downloadJson } from './utils/media'
 import { useEffect, useState } from 'react'
 import { useLabStore } from './store/useLabStore'
+import KeyboardOverlay from './lab/KeyboardOverlay'
 
 function App() {
 	const [tab, setTab] = useState<TabKey>('Lab')
@@ -24,6 +25,7 @@ function App() {
 	const [exportProgress, setExportProgress] = useState<number>(0)
 	const [exporting, setExporting] = useState<boolean>(false)
 	const [aborter, setAborter] = useState<AbortController | null>(null)
+	const [showKeys, setShowKeys] = useState(false)
 
 	async function handleExport() {
 		const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
@@ -70,6 +72,7 @@ function App() {
 				case '6': handleRecord(6); break;
 				case 's': case 'S': downloadJson('ace-style-pack.json', buildPack()); break;
 				case 'a': case 'A': import('./agents/pipeline').then(m => m.applyAceLook()); break;
+				case '?': case 'h': case 'H': setShowKeys(v=>!v); break;
 			}
 		}
 		window.addEventListener('keydown', onKey);
@@ -117,6 +120,7 @@ function App() {
 					<button className="btn-primary" onClick={abortExport}>Abort</button>
 				</div>
 			)}
+			{showKeys && <KeyboardOverlay onClose={()=>setShowKeys(false)} />}
 		</AppShell>
 	)
 }

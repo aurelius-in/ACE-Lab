@@ -11,6 +11,15 @@ export default function TimelinePanel() {
 	const [dragIdx, setDragIdx] = useState<number|null>(null);
 	const baseSnap = Number(localStorage.getItem('ace.snapStep') || '0.05');
 
+	function addKeyframeAt(clientX: number){
+		const bar = barRef.current; if (!bar) return;
+		const rect = bar.getBoundingClientRect();
+		let t = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+		const step = baseSnap; t = Math.round(t/step)*step;
+		const next = [...keyframes, { t, mix: 1 }].sort((a,b)=>a.t-b.t);
+		setTimeline({ timeline: { keyframes: next } });
+	}
+
 	function onDown(_e: React.MouseEvent, idx: number){
 		const bar = barRef.current; if (!bar) return;
 		const rect = bar.getBoundingClientRect();
@@ -29,6 +38,19 @@ export default function TimelinePanel() {
 		window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
 	}
 
+	function onBarClick(e: React.MouseEvent){
+		if ((e.target as HTMLElement).closest('[data-kf]')) return;
+		addKeyframeAt(e.clientX);
+	}
+	function onDiamondDown(e: React.MouseEvent, i: number){
+		if (e.altKey) {
+			const next = keyframes.filter((_,idx)=>idx!==i);
+			setTimeline({ timeline: { keyframes: next } });
+			return;
+		}
+		onDown(e,i);
+	}
+
 	return (
 		<div className="mt-4">
 			<div className="flex items-center justify-between mb-2">
@@ -38,7 +60,7 @@ export default function TimelinePanel() {
 					<input type="range" min={0} max={1} step={0.001} value={play.t} onChange={(e)=>setPlayhead(Number(e.target.value))} className="w-48" />
 				</div>
 			</div>
-			<div ref={barRef} className="relative h-20 card-dark p-2 overflow-hidden">
+			<div ref={barRef} className="relative h-20 card-dark p-2 overflow-hidden" onMouseDown={onBarClick}>
 				{/* grid */}
 				<div className="absolute inset-0">
 					{Array.from({ length: 21 }).map((_,i)=> (
@@ -50,7 +72,7 @@ export default function TimelinePanel() {
 				</div>
 				<div className="absolute left-0 right-0 top-1/2 h-px bg-white/10" />
 				{keyframes.map((k, i) => (
-					<div key={i} className="absolute -translate-x-1/2 cursor-pointer" style={{ left: `${k.t*100}%` }} onMouseDown={(e)=>onDown(e,i)}>
+					<div key={i} data-kf className="absolute -translate-x-1/2 cursor-pointer" style={{ left: `${k.t*100}%` }} onMouseDown={(e)=>onDiamondDown(e,i)}>
 						<div className="w-3 h-3 rotate-45 bg-white/80" />
 						{dragIdx===i && <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] bg-black/70 px-1 rounded">{Math.round(k.t*100)}%</div>}
 					</div>

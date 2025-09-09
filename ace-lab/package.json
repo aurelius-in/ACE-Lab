@@ -10,12 +10,13 @@
     "preview": "vite preview",
     "server": "node server/index.mjs",
     "dev:server": "set PORT=4000; node server/index.mjs | cat",
-    "postinstall": "git config core.hooksPath .husky || true"
+    "test": "node --test server/tests/**/*.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "multer": "^2.0.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "zod": "^4.1.5",
