@@ -118,9 +118,12 @@ export default function CanvasHost() {
 			gl.uniform2f(gl.getUniformLocation(postProg, 'uRes'), c.width, c.height);
 			gl.uniform1f(gl.getUniformLocation(postProg, 'uTime'), now/1000);
 			gl.uniform1f(gl.getUniformLocation(postProg, 'uMix'), 1.0);
+			// uTex0 = blurred (pong), uTex1 = base (rtTex)
 			gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, pong); const p0 = gl.getUniformLocation(postProg,'uTex0'); if(p0) gl.uniform1i(p0,0);
-			const bloomStrength = (effect.params as any).bloomStrength ?? 0.25; const lutAmount = (effect.params as any).lutAmount ?? 0.2;
-			gl.uniform4f(gl.getUniformLocation(postProg,'uParams'), bloomStrength, 2.0, lutAmount, 0.0);
+			gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, rtTex); const p1u = gl.getUniformLocation(postProg,'uTex1'); if(p1u) gl.uniform1i(p1u,1);
+			const bloomStrength = (effect.params as any).bloomStrength ?? 0.25; const lutAmount = (effect.params as any).lutAmount ?? 0.2; const bloomThreshold = (effect.params as any).bloomThreshold ?? 0.7; const grainAmount = (effect.params as any).grainAmount ?? 0.05; const vignette01 = (effect.params as any).vignette01 ?? 1.0;
+			gl.uniform4f(gl.getUniformLocation(postProg,'uParams'), bloomStrength, bloomThreshold, lutAmount, grainAmount);
+			const vloc = gl.getUniformLocation(postProg,'uVignette'); if (vloc) gl.uniform1f(vloc, vignette01);
 			// bind LUT if present
 			if (lutTex) { gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, lutTex); const l0 = gl.getUniformLocation(postProg,'uLUT'); if (l0) gl.uniform1i(l0,3); }
 			gl.drawArrays(gl.TRIANGLES, 0, 3);

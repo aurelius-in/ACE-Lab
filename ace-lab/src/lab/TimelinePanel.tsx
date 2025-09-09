@@ -9,6 +9,16 @@ export default function TimelinePanel() {
 	const togglePlay = useLabStore(s => s.togglePlay);
 	const barRef = useRef<HTMLDivElement|null>(null);
 	const [dragIdx, setDragIdx] = useState<number|null>(null);
+	const baseSnap = Number(localStorage.getItem('ace.snapStep') || '0.05');
+
+	function addKeyframeAt(clientX: number){
+		const bar = barRef.current; if (!bar) return;
+		const rect = bar.getBoundingClientRect();
+		let t = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+		const step = baseSnap; t = Math.round(t/step)*step;
+		const next = [...keyframes, { t, mix: 1 }].sort((a,b)=>a.t-b.t);
+		setTimeline({ timeline: { keyframes: next } });
+	}
 
 	function onDown(_e: React.MouseEvent, idx: number){
 		const bar = barRef.current; if (!bar) return;
@@ -17,8 +27,8 @@ export default function TimelinePanel() {
 		function move(ev: MouseEvent){
 			const dx = ev.clientX - rect.left;
 			let t = Math.max(0, Math.min(1, dx / rect.width));
-			// snapping: default 0.05, Shift = finer 0.01, Alt = coarse 0.1
-			const step = ev.shiftKey ? 0.01 : (ev.altKey ? 0.1 : 0.05);
+			// snapping: default from settings, Shift = finer 0.25x, Alt = coarse 2x
+			const step = ev.shiftKey ? baseSnap*0.25 : (ev.altKey ? baseSnap*2 : baseSnap);
 			t = Math.round(t / step) * step;
 			const next = keyframes.map((k, i) => i===idx ? { ...k, t } : k);
 			setTimeline({ timeline: { keyframes: next } });
@@ -26,6 +36,19 @@ export default function TimelinePanel() {
 		}
 		function up(){ setDragIdx(null); window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up);} 
 		window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+	}
+
+	function onBarClick(e: React.MouseEvent){
+		if ((e.target as HTMLElement).closest('[data-kf]')) return;
+		addKeyframeAt(e.clientX);
+	}
+	function onDiamondDown(e: React.MouseEvent, i: number){
+		if (e.altKey) {
+			const next = keyframes.filter((_,idx)=>idx!==i);
+			setTimeline({ timeline: { keyframes: next } });
+			return;
+		}
+		onDown(e,i);
 	}
 
 	return (
@@ -37,7 +60,7 @@ export default function TimelinePanel() {
 					<input type="range" min={0} max={1} step={0.001} value={play.t} onChange={(e)=>setPlayhead(Number(e.target.value))} className="w-48" />
 				</div>
 			</div>
-			<div ref={barRef} className="relative h-20 card-dark p-2 overflow-hidden">
+			<div ref={barRef} className="relative h-20 card-dark p-2 overflow-hidden" onMouseDown={onBarClick}>
 				{/* grid */}
 				<div className="absolute inset-0">
 					{Array.from({ length: 21 }).map((_,i)=> (
@@ -49,7 +72,7 @@ export default function TimelinePanel() {
 				</div>
 				<div className="absolute left-0 right-0 top-1/2 h-px bg-white/10" />
 				{keyframes.map((k, i) => (
-					<div key={i} className="absolute -translate-x-1/2 cursor-pointer" style={{ left: `${k.t*100}%` }} onMouseDown={(e)=>onDown(e,i)}>
+					<div key={i} data-kf className="absolute -translate-x-1/2 cursor-pointer" style={{ left: `${k.t*100}%` }} onMouseDown={(e)=>onDiamondDown(e,i)}>
 						<div className="w-3 h-3 rotate-45 bg-white/80" />
 						{dragIdx===i && <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] bg-black/70 px-1 rounded">{Math.round(k.t*100)}%</div>}
 					</div>
