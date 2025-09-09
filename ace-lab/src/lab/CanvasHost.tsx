@@ -51,19 +51,26 @@ export default function CanvasHost() {
 		const upload = (g: WebGL2RenderingContext, url: string, to: WebGLTexture) => { const i=new Image(); i.crossOrigin='anonymous'; i.onload=()=>{ g.bindTexture(g.TEXTURE_2D,to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,i); }; i.src=url; };
 		upload(gl, media.primary?.src || '/ace-lab.webp', tex0); if (media.secondary) upload(gl, media.secondary.src, tex1);
 
-		// Generate SDF atlas for the whole text string using tiny-sdf
+		// Generate SDF atlas for the whole text string using tiny-sdf (with simple cache)
+		const glyphCache = new Map<string, HTMLCanvasElement>();
 		async function buildSdfTexture() {
 			const { default: TinySDF } = await import('tiny-sdf');
-			const sdf = new (TinySDF as any)(48, 3, 8, 0.25, 'Poppins');
+			const fontFamily = (useLabStore.getState().text.font) || 'Poppins';
+			const sdf = new (TinySDF as any)(48, 3, 8, 0.25, fontFamily);
 			const str = text.value || '';
 			const pad = 8; const w = 1024, h = 256; const canvas2 = document.createElement('canvas'); canvas2.width = w; canvas2.height = h; const ctx2 = canvas2.getContext('2d')!; ctx2.clearRect(0,0,w,h);
 			let x = 32; const y = h/2 + 16;
 			for (const ch of str) {
-				const glyph = sdf.draw(ch);
-				const img = new ImageData(new Uint8ClampedArray(glyph), sdf.size, sdf.size);
-				const off = document.createElement('canvas'); off.width = sdf.size; off.height = sdf.size; off.getContext('2d')!.putImageData(img, 0, 0);
-				ctx2.drawImage(off, x, y - sdf.size/2);
-				x += sdf.size + pad;
+				const key = fontFamily + '|' + ch;
+				let glyphCanvas = glyphCache.get(key);
+				if (!glyphCanvas) {
+					const glyph = sdf.draw(ch);
+					const img = new ImageData(new Uint8ClampedArray(glyph), sdf.size, sdf.size);
+					glyphCanvas = document.createElement('canvas'); glyphCanvas.width = sdf.size; glyphCanvas.height = sdf.size; glyphCanvas.getContext('2d')!.putImageData(img, 0, 0);
+					glyphCache.set(key, glyphCanvas);
+				}
+				ctx2.drawImage(glyphCanvas, x, y - (glyphCanvas.height/2));
+				x += (glyphCanvas.width + pad);
 			}
 			const g = gl as WebGL2RenderingContext;
 			g.bindTexture(g.TEXTURE_2D, textTex);
