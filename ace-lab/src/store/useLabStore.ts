@@ -31,6 +31,8 @@ type LabState = {
 	qa?: { fps: number };
 	toast?: { message: string; t: number };
 	agentLog?: { name: string; message: string; t: number }[];
+	agentTraces?: { name: string; started: number; durationMs: number; note?: string }[];
+	timelineEasing?: 'linear'|'easeIn'|'easeOut'|'easeInOut';
 	setEffectParam: (k: string, v: number) => void;
 	setEffectId: (id: string) => void;
 	applyPreset: (p: Preset) => void;
@@ -41,7 +43,7 @@ type LabState = {
 	setSecondary: (src: string) => void;
 	clearPrimary: () => void;
 	clearSecondary: () => void;
-	exportPolicyCheck: (w: number, h: number) => Promise<{ allowed: boolean; message?: string; fix?: () => { width: number; height: number } }>;
+	exportPolicyCheck: (w: number, h: number) => Promise<{ allowed: boolean; message?: string; fix?: () => { width: number; height: number }, violations?: string[] }>;
 	setTextValue: (t: string) => void;
 	setTextParam: (k: keyof TextParams, v: number) => void;
 	toggleText: (on: boolean) => void;
@@ -57,6 +59,9 @@ type LabState = {
 	setNoiseOpacity: (v: number) => void;
 	setLutSrc?: (src?: string) => void;
 	showToast?: (message: string) => void;
+	setTimelineEasing?: (e: 'linear'|'easeIn'|'easeOut'|'easeInOut') => void;
+	clearAgentLog?: () => void;
+	clearAgentTraces?: () => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -74,6 +79,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 	text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 }, font: 'Poppins' },
 	exportSettings: { bitrateKbps: 6000 },
 	briefPrompt: 'warm retro print, soft grain',
+	timelineEasing: 'linear',
 	setEffectParam: (k, v) => set((s) => {
 		const next = { effect: { ...s.effect, params: { ...s.effect.params, [k]: v } }, editCount: s.editCount + 1 } as Partial<LabState> as any;
 		if (s.editCount + 1 === 10 && s.presets.length < 2) {
@@ -96,14 +102,20 @@ export const useLabStore = create<LabState>((set, get) => ({
 	applyPreset: (p) => set((s) => ({ effect: { id: s.effect.id, params: { ...s.effect.params, ...p.params }, mix: 0 } })),
 	record: async () => { /* handled in App for now */ },
 	runAgent: async (name) => {
+		const start = performance.now();
 		const push = (message: string) => set((s)=> ({ agentLog: [...(s.agentLog||[]), { name, message, t: Date.now() }] }));
-		if (name === 'TransitionAgent') { const keys = [ { t: 0.0, mix: 0 }, { t: 0.5, mix: 1 }, { t: 1.0, mix: 0 } ]; set(() => ({ timeline: { keyframes: keys } })); push('Inserted 3 keyframes for cross-zoom'); }
-		else if (name === 'PresetAgent') { const s = get(); if (s.presets.filter(p=>p.id.startsWith('ai-')).length === 0) { set({ presets: [...s.presets, { id: 'ai-contrast', name: 'ACE Contrast Pop', params: { dotScale: 7, angleRad: 0.7, contrast: 1.25, invert01: 0 } }, { id: 'ai-retro', name: 'Retro Orchid', params: { dotScale: 11, angleRad: 0.4, contrast: 0.9, invert01: 0 } }] }); push('Added 2 AI-suggested presets'); } }
-		else if (name === 'PerfAgent') { const s = get(); if (s.media.secondary) { const params = { ...s.effect.params } as any; params.samples = Math.max(8, Math.floor((params.samples ?? 16) * 0.7)); set({ effect: { ...s.effect, params } }); push('Reduced samples for mobile-safe performance'); } else push('No secondary media; skipped sample reduction'); }
-		else if (name === 'BriefAgent') { const lp = briefFromPrompt(get().briefPrompt); set({ effect: { ...get().effect, params: { ...get().effect.params, ...lp.params } } }); push('Applied look profile from brief'); }
-		else if (name === 'PolicyAgent') { if (get().device === 'mobile') { set({ exportSettings: { ...get().exportSettings, width: 1920 } }); push('Set export width to 1920 for mobile policy'); } else push('No mobile constraints detected'); }
-		else if (name === 'QAAgent') { const r = await measureFps(1000); set({ qa: { fps: r.fps } }); push(`Measured ~${r.fps} fps`); }
-		else if (name === 'ArchitectAgent') { push('Proposed VHS + Halftone blend with bloom and LUT'); push('Suggested params: bloomThreshold=0.65, grain=0.04, lutAmount=0.25'); }
+		try {
+			if (name === 'TransitionAgent') { const keys = [ { t: 0.0, mix: 0 }, { t: 0.5, mix: 1 }, { t: 1.0, mix: 0 } ]; set(() => ({ timeline: { keyframes: keys } })); push('Inserted 3 keyframes for cross-zoom'); }
+			else if (name === 'PresetAgent') { const s = get(); if (s.presets.filter(p=>p.id.startsWith('ai-')).length === 0) { set({ presets: [...s.presets, { id: 'ai-contrast', name: 'ACE Contrast Pop', params: { dotScale: 7, angleRad: 0.7, contrast: 1.25, invert01: 0 } }, { id: 'ai-retro', name: 'Retro Orchid', params: { dotScale: 11, angleRad: 0.4, contrast: 0.9, invert01: 0 } }] }); push('Added 2 AI-suggested presets'); } }
+			else if (name === 'PerfAgent') { const s = get(); if (s.media.secondary) { const params = { ...s.effect.params } as any; params.samples = Math.max(8, Math.floor((params.samples ?? 16) * 0.7)); set({ effect: { ...s.effect, params } }); push('Reduced samples for mobile-safe performance'); } else push('No secondary media; skipped sample reduction'); }
+			else if (name === 'BriefAgent') { const lp = briefFromPrompt(get().briefPrompt); set({ effect: { ...get().effect, params: { ...get().effect.params, ...lp.params } } }); push('Applied look profile from brief'); }
+			else if (name === 'PolicyAgent') { if (get().device === 'mobile') { set({ exportSettings: { ...get().exportSettings, width: 1920 } }); push('Set export width to 1920 for mobile policy'); } else push('No mobile constraints detected'); }
+			else if (name === 'QAAgent') { const r = await measureFps(1000); set({ qa: { fps: r.fps } }); push(`Measured ~${r.fps} fps`); }
+			else if (name === 'ArchitectAgent') { const s = get(); const suggested = { bloomThreshold: 0.65, grainAmount: 0.04, lutAmount: 0.25 }; set({ effect: { ...s.effect, params: { ...s.effect.params, ...suggested } }, presets: [...s.presets, { id: 'ai-architect-1', name: 'Architect Suggestion', params: suggested }] }); push('Applied architect suggestions and saved preset'); }
+		} finally {
+			const durationMs = Math.round(performance.now() - start);
+			set((s)=> ({ agentTraces: [...(s.agentTraces||[]), { name, started: Date.now(), durationMs }] }));
+		}
 	},
 	setFps: (n) => set(() => ({ fps: n })),
 	setPrimary: (src) => set((s) => ({ media: { ...s.media, primary: { kind: 'image', src } } })),
@@ -114,13 +126,13 @@ export const useLabStore = create<LabState>((set, get) => ({
 		try {
 			const { checkWithOpa } = await import('../policy/opa');
 			const out = await checkWithOpa({ width: w, height: h, device: get().device });
-			if (out.allowed) return { allowed: true };
-			return { allowed: false, message: out.violations[0], fix: () => ({ width: 1920, height: Math.round(1920 / w * h) }) };
+			if (out.allowed) return { allowed: true, violations: [] };
+			return { allowed: false, message: out.violations[0], violations: out.violations, fix: () => ({ width: 1920, height: Math.round(1920 / w * h) }) };
 		} catch {
 			const res = checkPolicy({ width: w, height: h, device: get().device });
-			if (res.allowed) return { allowed: true };
+			if (res.allowed) return { allowed: true, violations: [] };
 			const fix = res.fixes?.[0];
-			return { allowed: false, message: res.violations[0], fix: fix ? () => fix.apply({ width: w, height: h, device: get().device }) : undefined };
+			return { allowed: false, message: res.violations[0], violations: res.violations, fix: fix ? () => fix.apply({ width: w, height: h, device: get().device }) : undefined };
 		}
 	},
 	setTextValue: (t) => set((s)=> ({ text: { ...s.text, value: t } })),
@@ -138,6 +150,9 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setNoiseOpacity: (v) => { document.documentElement.style.setProperty('--noise-opacity', String(Math.max(0, Math.min(0.2, v)))); },
 	setLutSrc: (src) => set((s) => ({ assets: { ...(s.assets ?? {}), lutSrc: src } })),
 	showToast: (message: string) => { set({ toast: { message, t: Date.now() } }); setTimeout(() => { const cur = get().toast; if (cur && Date.now() - cur.t >= 1800) { set({ toast: undefined }); } }, 2000); },
+	setTimelineEasing: (e) => set(() => ({ timelineEasing: e })),
+	clearAgentLog: () => set(() => ({ agentLog: [] })),
+	clearAgentTraces: () => set(() => ({ agentTraces: [] })),
 }));
 
 

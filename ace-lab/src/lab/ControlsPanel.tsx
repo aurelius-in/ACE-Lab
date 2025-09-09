@@ -8,6 +8,7 @@ export default function ControlsPanel() {
 	const setSecondary = useLabStore(s => s.setSecondary);
 	const setNoiseOpacity = useLabStore(s => s.setNoiseOpacity);
 	const setLutSrc = useLabStore(s => s.setLutSrc!);
+	const lutSrc = useLabStore(s => s.assets?.lutSrc);
 
 	function onFile(e: React.ChangeEvent<HTMLInputElement>, which: 'primary'|'secondary'|'lut') {
 		const f = e.target.files?.[0]; if (!f) return;
@@ -34,8 +35,14 @@ export default function ControlsPanel() {
 					<input type="file" accept="image/*" onChange={(e)=>onFile(e,'secondary')} className="block mt-1 text-sm" />
 				</label>
 				<label className="block text-sm">
-					<span className="text-white/70">LUT (PNG)</span>
-					<input type="file" accept="image/png" onChange={(e)=>onFile(e,'lut')} className="block mt-1 text-sm" />
+					<span className="text-white/70">LUT (PNG or .cube)</span>
+					<input type="file" accept="image/png,.cube" onChange={(e)=>onFile(e,'lut')} className="block mt-1 text-sm" />
+					{lutSrc && (
+						<div className="mt-2 flex items-center gap-2">
+							<img src={lutSrc} alt="LUT" className="w-24 h-6 object-cover rounded border border-white/10" />
+							<button className="btn-primary" onClick={()=>setLutSrc(undefined)}>Clear LUT</button>
+						</div>
+					)}
 				</label>
 				{Object.entries(effect.params).filter(([k])=>!['bloomStrength','lutAmount','samples','zoomStrength','bloomThreshold','grainAmount','vignette01'].includes(k) || effect.id==='halftone').map(([k, v]) => (
 					<label key={k} className="block text-sm">

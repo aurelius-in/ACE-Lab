@@ -28,6 +28,26 @@
     "id": "builtin-textwave-title",
     "name": "Textwave Title",
     "params": { "amp": 8, "freq": 9, "speed": 1.5, "outlinePx": 2 }
+  },
+  {
+    "id": "builtin-print-newspaper",
+    "name": "Print Newspaper",
+    "params": { "dotScale": 12, "angleRad": 0.65, "contrast": 0.9, "invert01": 0 }
+  },
+  {
+    "id": "builtin-mobile-safe",
+    "name": "Mobile Safe",
+    "params": { "zoomStrength": 0.9, "samples": 8 }
+  },
+  {
+    "id": "builtin-cinematic-soft",
+    "name": "Cinematic Soft",
+    "params": { "bloomStrength": 0.35, "bloomThreshold": 0.7, "grainAmount": 0.03, "lutAmount": 0.2 }
+  },
+  {
+    "id": "builtin-monochrome-print",
+    "name": "Monochrome Print",
+    "params": { "dotScale": 10, "angleRad": 0.5, "contrast": 1.15, "invert01": 1 }
   }
 ]
 

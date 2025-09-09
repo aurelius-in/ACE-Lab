@@ -50,4 +50,10 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #
 
 .ace-glow::before { content: ""; position: absolute; inset: -20% -20% -20% -20%; background: var(--glow-ace); filter: blur(20px); z-index: -1; }
 
+/* Subtle animations */
+@keyframes ace-fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes ace-slide-up { from { transform: translateY(6px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+.animate-fade-in { animation: ace-fade-in 300ms ease-out both }
+.animate-slide-up { animation: ace-slide-up 300ms ease-out both }
+
 

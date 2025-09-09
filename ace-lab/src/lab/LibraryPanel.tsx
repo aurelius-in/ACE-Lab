@@ -24,8 +24,20 @@ export default function LibraryPanel(){
 	return (
 		<div className="space-y-4">
 			<h2 className="text-lg font-semibold ace-gradient-text">Library</h2>
-			<div className="text-sm">Image A: {media.primary?.src ? <span className="text-white/80">loaded</span> : <span className="text-white/50">none</span>} {media.primary?.src && <button className="ml-2 btn-primary" onClick={clearA}>Clear</button>}</div>
-			<div className="text-sm">Image B: {media.secondary?.src ? <span className="text-white/80">loaded</span> : <span className="text-white/50">none</span>} {media.secondary?.src && <button className="ml-2 btn-primary" onClick={clearB}>Clear</button>}</div>
+			<div className="text-sm">
+				<div className="flex items-center gap-2">
+					<span>Image A:</span>
+					{media.primary?.src ? <span className="text-white/80">loaded</span> : <span className="text-white/50 animate-pulse">none</span>}
+					{media.primary?.src && <button className="ml-2 btn-primary" onClick={clearA}>Clear</button>}
+				</div>
+			</div>
+			<div className="text-sm">
+				<div className="flex items-center gap-2">
+					<span>Image B:</span>
+					{media.secondary?.src ? <span className="text-white/80">loaded</span> : <span className="text-white/50 animate-pulse">none</span>}
+					{media.secondary?.src && <button className="ml-2 btn-primary" onClick={clearB}>Clear</button>}
+				</div>
+			</div>
 			<div className="pt-2 border-t border-white/10">
 				<h3 className="text-sm text-white/70 mb-2">Style Packs</h3>
 				<div className="flex items-center gap-2">
@@ -35,6 +47,9 @@ export default function LibraryPanel(){
 						<input type="file" accept="application/json" onChange={loadPack} className="hidden" />
 					</label>
 				</div>
+				{(!media.primary?.src && !media.secondary?.src) && (
+					<div className="text-xs text-white/60 mt-3">Tip: Load Image A in the Effects tab to get started.</div>
+				)}
 			</div>
 		</div>
 	);

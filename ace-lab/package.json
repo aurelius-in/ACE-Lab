@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "server": "node server/index.mjs",
     "dev:server": "set PORT=4000; node server/index.mjs | cat",
-    "test": "node --test server/tests/**/*.mjs"
+    "test": "node --test server/tests/**/*.mjs",
+    "e2e": "start /B cmd /C vite --port 5173 & npx playwright test"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@eslint/js": "^9.33.0",
     "@open-policy-agent/opa-wasm": "^1.10.0",
+    "@playwright/test": "^1.48.2",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
