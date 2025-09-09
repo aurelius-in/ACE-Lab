@@ -29,6 +29,7 @@ type LabState = {
 	exportSettings: { width?: number; height?: number };
 	briefPrompt: string;
 	qa?: { fps: number };
+	toast?: { message: string; t: number };
 	setEffectParam: (k: string, v: number) => void;
 	setEffectId: (id: string) => void;
 	applyPreset: (p: Preset) => void;
@@ -54,6 +55,7 @@ type LabState = {
 	hydrateFrom: (p: Partial<Pick<LabState,'effect'|'timeline'|'text'|'device'|'exportSettings'|'play'>>) => void;
 	setNoiseOpacity: (v: number) => void;
 	setLutSrc?: (src?: string) => void;
+	showToast?: (message: string) => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -132,6 +134,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 	hydrateFrom: (p) => set(() => ({ effect: p.effect ? { ...get().effect, ...p.effect } : get().effect, timeline: p.timeline ? { keyframes: p.timeline.keyframes } : get().timeline, text: p.text ? { ...get().text, ...p.text } : get().text, device: p.device ?? get().device, exportSettings: p.exportSettings ?? get().exportSettings, play: p.play ?? get().play })),
 	setNoiseOpacity: (v) => { document.documentElement.style.setProperty('--noise-opacity', String(Math.max(0, Math.min(0.2, v)))); },
 	setLutSrc: (src) => set((s) => ({ assets: { ...(s.assets ?? {}), lutSrc: src } })),
+	showToast: (message: string) => { set({ toast: { message, t: Date.now() } }); setTimeout(() => { const cur = get().toast; if (cur && Date.now() - cur.t >= 1800) { set({ toast: undefined }); } }, 2000); },
 }));
 
 

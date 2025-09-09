@@ -21,6 +21,7 @@ export async function applyAceLook(){
 	else if ('aberration' in params || 'scanline' in params) st.setEffectId('vhs');
 	else st.setEffectId('halftone');
 	st.applyPreset(top);
+	st.showToast?.('ACE Look applied');
 }
 
 
