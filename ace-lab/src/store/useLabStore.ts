@@ -131,6 +131,15 @@ export const useLabStore = create<LabState>((set, get) => ({
 			if (out.allowed) return { allowed: true, violations: [] };
 			return { allowed: false, message: out.violations[0], violations: out.violations, fix: () => ({ width: 1920, height: Math.round(1920 / w * h) }) };
 		} catch {
+			try {
+				const r = await fetch('http://localhost:4000/policy/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ width: w, height: h, device: get().device }) });
+				if (r.ok) {
+					const j = await r.json();
+					if (j.allowed) return { allowed: true, violations: [] };
+					const fx = j.fix ? () => ({ width: j.fix.width, height: j.fix.height ?? Math.round(j.fix.width / w * h) }) : undefined;
+					return { allowed: false, message: j.violations?.[0], violations: j.violations, fix: fx };
+				}
+			} catch {}
 			const res = checkPolicy({ width: w, height: h, device: get().device });
 			if (res.allowed) return { allowed: true, violations: [] };
 			const fix = res.fixes?.[0];

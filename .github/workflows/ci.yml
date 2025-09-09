@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install deps
+        working-directory: ./ace-lab
+        run: npm ci
+      - name: Build
+        working-directory: ./ace-lab
+        run: npm run build
+      - name: Server tests
+        working-directory: ./ace-lab
+        run: npm run test
+      - name: Start backend
+        working-directory: ./ace-lab
+        run: nohup node server/index.mjs > /dev/null 2>&1 &
+      - name: Start frontend
+        working-directory: ./ace-lab
+        run: nohup npm run dev -- --port 5173 > /dev/null 2>&1 &
+      - name: Install Playwright
+        working-directory: ./ace-lab
+        run: npx playwright install --with-deps
+      - name: E2E
+        working-directory: ./ace-lab
+        env:
+          CI: true
+        run: npx playwright test
+
+
