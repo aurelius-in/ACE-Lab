@@ -19,9 +19,9 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 						</div>
 						<h1 className="text-xl font-bold ace-gradient-text">ACE Lab</h1>
 					</div>
-					<nav className="flex items-center gap-2">
+					<nav className="flex items-center gap-2" role="tablist" aria-label="Main sections">
 						{tabs.map(t => (
-							<button key={t} className={clsx('px-3 py-1.5 rounded-2xl border border-white/10 text-sm', activeTab===t ? 'ace-gradient-text' : 'text-white/70 hover:text-white')} onClick={() => onTabChange(t)}>
+							<button key={t} role="tab" aria-selected={activeTab===t} className={clsx('px-3 py-1.5 rounded-2xl border border-white/10 text-sm', activeTab===t ? 'ace-gradient-text' : 'text-white/70 hover:text-white')} onClick={() => onTabChange(t)}>
 								{t}
 							</button>
 						))}
@@ -31,9 +31,9 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 							<option value="desktop">Desktop</option>
 							<option value="mobile">Mobile</option>
 						</select>
-						<button className="btn-primary" onClick={onExport}>Export</button>
-						<button className="btn-primary" onClick={onRecord3}>Record 3s</button>
-						<button className="btn-primary" onClick={onRecord6}>Record 6s</button>
+						<button className="btn-primary" aria-label="Export video" onClick={onExport}>Export</button>
+						<button className="btn-primary" aria-label="Record three seconds" onClick={onRecord3}>Record 3s</button>
+						<button className="btn-primary" aria-label="Record six seconds" onClick={onRecord6}>Record 6s</button>
 					</div>
 				</div>
 				<div style={{height:1, background: 'linear-gradient(90deg, var(--ace-g1), var(--ace-g3))'}} />
