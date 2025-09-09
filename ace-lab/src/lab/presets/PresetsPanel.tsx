@@ -8,6 +8,10 @@ export default function PresetsPanel(){
 	const setEffectId = useLabStore(s => s.setEffectId);
 	const setTextParam = useLabStore(s => s.setTextParam);
 	const toggleText = useLabStore(s => s.toggleText);
+	const effect = useLabStore(s => s.effect);
+	const setState = useLabStore.setState as (p: any) => void;
+	const showToast = useLabStore(s => s.showToast);
+	const [newName, setNewName] = useState('My ACE Preset');
 	const fileRef = useRef<HTMLInputElement|null>(null);
 	const [builtin, setBuiltin] = useState<{ id: string; name: string; params: Record<string, number> }[]>([]);
 	useEffect(() => {
@@ -23,9 +27,15 @@ export default function PresetsPanel(){
 			const data = JSON.parse(txt);
 			if (!Array.isArray(data)) throw new Error('Invalid');
 			const cleaned = data.filter((p)=> p && typeof p.id==='string' && typeof p.name==='string' && typeof p.params==='object');
-			(useLabStore.setState as any)({ presets: cleaned });
+			setState({ presets: cleaned });
 		} catch {}
 		finally { if (fileRef.current) fileRef.current.value = ''; }
+	}
+	function saveCurrent(){
+		const id = `user-${Date.now()}`;
+		const preset = { id, name: newName.trim() || 'My ACE Preset', params: { ...effect.params } };
+		setState({ presets: [...presets, preset] });
+		showToast?.('Preset saved');
 	}
 	return (
 		<div className="space-y-4">
@@ -53,6 +63,10 @@ export default function PresetsPanel(){
 						<button className="btn-primary" onClick={()=>fileRef.current?.click()}>Import</button>
 						<input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={onImport} />
 					</div>
+				</div>
+				<div className="flex gap-2 items-center mb-3">
+					<input value={newName} onChange={(e)=>setNewName(e.target.value)} placeholder="Preset name" className="rounded-xl bg-black/30 border border-white/10 p-2 text-sm" />
+					<button className="btn-primary" onClick={saveCurrent}>Save as preset</button>
 				</div>
 				{presets.length === 0 ? <div className="text-white/60">None yet</div> : (
 					<div className="flex flex-wrap gap-2">

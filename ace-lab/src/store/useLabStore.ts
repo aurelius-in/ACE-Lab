@@ -26,10 +26,11 @@ type LabState = {
 	presets: Preset[];
 	editCount: number;
 	text: { enabled: boolean; value: string; params: TextParams };
-	exportSettings: { width?: number; height?: number };
+	exportSettings: { width?: number; height?: number; bitrateKbps?: number };
 	briefPrompt: string;
 	qa?: { fps: number };
 	toast?: { message: string; t: number };
+	agentLog?: { name: string; message: string; t: number }[];
 	setEffectParam: (k: string, v: number) => void;
 	setEffectId: (id: string) => void;
 	applyPreset: (p: Preset) => void;
@@ -60,7 +61,7 @@ type LabState = {
 
 export const useLabStore = create<LabState>((set, get) => ({
 	media: {}, assets: {},
-	effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0, bloomStrength: 0.25, lutAmount: 0.2 }, mix: 0 },
+	effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0, bloomStrength: 0.25, lutAmount: 0.2, bloomThreshold: 0.7, grainAmount: 0.05, vignette01: 1 }, mix: 0 },
 	timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] },
 	play: { t: 0, playing: true },
 	fps: 60,
@@ -71,7 +72,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 	],
 	editCount: 0,
 	text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 } },
-	exportSettings: {},
+	exportSettings: { bitrateKbps: 6000 },
 	briefPrompt: 'warm retro print, soft grain',
 	setEffectParam: (k, v) => set((s) => {
 		const next = { effect: { ...s.effect, params: { ...s.effect.params, [k]: v } }, editCount: s.editCount + 1 } as Partial<LabState> as any;
@@ -95,12 +96,13 @@ export const useLabStore = create<LabState>((set, get) => ({
 	applyPreset: (p) => set((s) => ({ effect: { id: s.effect.id, params: { ...s.effect.params, ...p.params }, mix: 0 } })),
 	record: async () => { /* handled in App for now */ },
 	runAgent: async (name) => {
-		if (name === 'TransitionAgent') { const keys = [ { t: 0.0, mix: 0 }, { t: 0.5, mix: 1 }, { t: 1.0, mix: 0 } ]; set(() => ({ timeline: { keyframes: keys } })); }
-		else if (name === 'PresetAgent') { const s = get(); if (s.presets.filter(p=>p.id.startsWith('ai-')).length === 0) { set({ presets: [...s.presets, { id: 'ai-contrast', name: 'ACE Contrast Pop', params: { dotScale: 7, angleRad: 0.7, contrast: 1.25, invert01: 0 } }, { id: 'ai-retro', name: 'Retro Orchid', params: { dotScale: 11, angleRad: 0.4, contrast: 0.9, invert01: 0 } }] }); } }
-		else if (name === 'PerfAgent') { const s = get(); if (s.media.secondary) { const params = { ...s.effect.params } as any; params.samples = Math.max(8, Math.floor((params.samples ?? 16) * 0.7)); set({ effect: { ...s.effect, params } }); } }
-		else if (name === 'BriefAgent') { const lp = briefFromPrompt(get().briefPrompt); set({ effect: { ...get().effect, params: { ...get().effect.params, ...lp.params } } }); }
-		else if (name === 'PolicyAgent') { if (get().device === 'mobile') { set({ exportSettings: { width: 1920 } }); } }
-		else if (name === 'QAAgent') { const r = await measureFps(1000); set({ qa: { fps: r.fps } }); }
+		const push = (message: string) => set((s)=> ({ agentLog: [...(s.agentLog||[]), { name, message, t: Date.now() }] }));
+		if (name === 'TransitionAgent') { const keys = [ { t: 0.0, mix: 0 }, { t: 0.5, mix: 1 }, { t: 1.0, mix: 0 } ]; set(() => ({ timeline: { keyframes: keys } })); push('Inserted 3 keyframes for cross-zoom'); }
+		else if (name === 'PresetAgent') { const s = get(); if (s.presets.filter(p=>p.id.startsWith('ai-')).length === 0) { set({ presets: [...s.presets, { id: 'ai-contrast', name: 'ACE Contrast Pop', params: { dotScale: 7, angleRad: 0.7, contrast: 1.25, invert01: 0 } }, { id: 'ai-retro', name: 'Retro Orchid', params: { dotScale: 11, angleRad: 0.4, contrast: 0.9, invert01: 0 } }] }); push('Added 2 AI-suggested presets'); } }
+		else if (name === 'PerfAgent') { const s = get(); if (s.media.secondary) { const params = { ...s.effect.params } as any; params.samples = Math.max(8, Math.floor((params.samples ?? 16) * 0.7)); set({ effect: { ...s.effect, params } }); push('Reduced samples for mobile-safe performance'); } else push('No secondary media; skipped sample reduction'); }
+		else if (name === 'BriefAgent') { const lp = briefFromPrompt(get().briefPrompt); set({ effect: { ...get().effect, params: { ...get().effect.params, ...lp.params } } }); push('Applied look profile from brief'); }
+		else if (name === 'PolicyAgent') { if (get().device === 'mobile') { set({ exportSettings: { ...get().exportSettings, width: 1920 } }); push('Set export width to 1920 for mobile policy'); } else push('No mobile constraints detected'); }
+		else if (name === 'QAAgent') { const r = await measureFps(1000); set({ qa: { fps: r.fps } }); push(`Measured ~${r.fps} fps`); }
 	},
 	setFps: (n) => set(() => ({ fps: n })),
 	setPrimary: (src) => set((s) => ({ media: { ...s.media, primary: { kind: 'image', src } } })),
@@ -125,12 +127,12 @@ export const useLabStore = create<LabState>((set, get) => ({
 	toggleText: (on) => set((s)=> ({ text: { ...s.text, enabled: on } })),
 	setDevice: (d) => set(() => ({ device: d })),
 	setBriefPrompt: (t) => set(() => ({ briefPrompt: t })),
-	setExportSize: (w, h) => set(() => ({ exportSettings: { width: w, height: h } })),
+	setExportSize: (w, h) => set(() => ({ exportSettings: { ...get().exportSettings, width: w, height: h } })),
 	setPlayhead: (t) => set(() => ({ play: { ...get().play, t: Math.max(0, Math.min(1, t)) } })),
 	togglePlay: () => set(() => ({ play: { ...get().play, playing: !get().play.playing } })),
 	buildStylePack: () => { const s = get(); return { palette: ['#6E00FF', '#A83CF0', '#FF4BB5'], blocks: [s.effect.id], params: s.effect.params, timeline: s.timeline.keyframes }; },
 	applyStylePack: (sp) => set(() => ({ effect: { id: sp.blocks[0] || 'halftone', params: sp.params, mix: 0 }, timeline: { keyframes: sp.timeline } })),
-	resetDefaults: () => set(() => ({ effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0, bloomStrength: 0.25, lutAmount: 0.2 }, mix: 0 }, timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] }, play: { t: 0, playing: true }, text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 } }, exportSettings: {} })),
+	resetDefaults: () => set(() => ({ effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0, bloomStrength: 0.25, lutAmount: 0.2, bloomThreshold: 0.7, grainAmount: 0.05, vignette01: 1 }, mix: 0 }, timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] }, play: { t: 0, playing: true }, text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 } }, exportSettings: { bitrateKbps: 6000 } })),
 	hydrateFrom: (p) => set(() => ({ effect: p.effect ? { ...get().effect, ...p.effect } : get().effect, timeline: p.timeline ? { keyframes: p.timeline.keyframes } : get().timeline, text: p.text ? { ...get().text, ...p.text } : get().text, device: p.device ?? get().device, exportSettings: p.exportSettings ?? get().exportSettings, play: p.play ?? get().play })),
 	setNoiseOpacity: (v) => { document.documentElement.style.setProperty('--noise-opacity', String(Math.max(0, Math.min(0.2, v)))); },
 	setLutSrc: (src) => set((s) => ({ assets: { ...(s.assets ?? {}), lutSrc: src } })),
