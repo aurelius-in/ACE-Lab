@@ -57,6 +57,7 @@ function App() {
 				case 'r': case 'R': handleRecord(3); break;
 				case '6': handleRecord(6); break;
 				case 's': case 'S': downloadJson('ace-style-pack.json', buildPack()); break;
+				case 'a': case 'A': import('./agents/pipeline').then(m => m.applyAceLook()); break;
 			}
 		}
 		window.addEventListener('keydown', onKey);
