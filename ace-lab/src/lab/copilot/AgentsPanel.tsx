@@ -14,6 +14,13 @@ export default function AgentsPanel(){
 				<button className="btn-primary" onClick={()=>runAgent('PolicyAgent')}>PolicyAgent</button>
 				<button className="btn-primary" onClick={()=>runAgent('QAAgent')}>QAAgent</button>
 			</div>
+			<div className="card-dark p-3 rounded-xl border border-white/10">
+				<h4 className="text-sm ace-gradient-text mb-2">Architect proposals</h4>
+				<div className="flex flex-wrap gap-2">
+					<button className="btn-primary" onClick={()=>runAgent('ArchitectAgent')}>Propose VHS + Halftone</button>
+					<button className="btn-primary" onClick={()=>runAgent('ArchitectAgent')}>Tune Bloom/LUT</button>
+				</div>
+			</div>
 			<div className="h-48 overflow-auto card-dark p-2 space-y-1" aria-label="agent logs">
 				{logs.length===0 ? <div className="text-white/60">No logs yet</div> : logs.slice().reverse().map((l,i)=> (
 					<div key={i} className="text-xs text-white/80"><span className="text-white/50">{new Date(l.t).toLocaleTimeString()}</span> — <span className="ace-gradient-text">{l.name}</span>: {l.message}</div>
