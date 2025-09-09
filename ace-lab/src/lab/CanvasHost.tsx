@@ -64,9 +64,18 @@ export default function CanvasHost() {
 				const key = fontFamily + '|' + ch;
 				let glyphCanvas = glyphCache.get(key);
 				if (!glyphCanvas) {
-					const glyph = sdf.draw(ch);
-					const img = new ImageData(new Uint8ClampedArray(glyph), sdf.size, sdf.size);
-					glyphCanvas = document.createElement('canvas'); glyphCanvas.width = sdf.size; glyphCanvas.height = sdf.size; glyphCanvas.getContext('2d')!.putImageData(img, 0, 0);
+					const glyph = sdf.draw(ch) as Uint8ClampedArray | Uint8Array | number[];
+					if (!glyph || (glyph as any).length === 0) { continue; }
+					const src = Array.isArray(glyph) ? glyph : Array.from(glyph as any);
+					const size = sdf.size as number;
+					const rgba = new Uint8ClampedArray(size * size * 4);
+					for (let i = 0; i < size * size; i++) {
+						const a = (src[i] as number) | 0;
+						const idx = i * 4;
+						rgba[idx] = 255; rgba[idx + 1] = 255; rgba[idx + 2] = 255; rgba[idx + 3] = a;
+					}
+					const img = new ImageData(rgba, size, size);
+					glyphCanvas = document.createElement('canvas'); glyphCanvas.width = size; glyphCanvas.height = size; glyphCanvas.getContext('2d')!.putImageData(img, 0, 0);
 					glyphCache.set(key, glyphCanvas);
 				}
 				ctx2.drawImage(glyphCanvas, x, y - (glyphCanvas.height/2));
