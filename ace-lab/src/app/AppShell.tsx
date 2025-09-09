@@ -10,7 +10,7 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 			<header className="sticky top-0 z-10 backdrop-blur-sm">
 				<div className="container mx-auto flex items-center justify-between py-4">
 					<div className="relative flex items-center gap-3">
-						<img src="/ace-lab-min.png" alt="ACE Lab" className="h-9 w-auto select-none" draggable={false} />
+						<img src="/ace-lab-min.png" alt="ACE Lab" className="h-[300px] w-auto select-none" draggable={false} />
 					</div>
 					<nav className="flex items-center gap-3" role="tablist" aria-label="Main sections">
 						{tabs.map(t => (
