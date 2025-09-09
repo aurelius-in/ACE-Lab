@@ -58,7 +58,7 @@ export default function CanvasHost() {
 			const fontFamily = (useLabStore.getState().text.font) || 'Poppins';
 			const sdf = new (TinySDF as any)(48, 3, 8, 0.25, fontFamily);
 			const str = text.value || '';
-			const pad = 8; const w = 1024, h = 256; const canvas2 = document.createElement('canvas'); canvas2.width = w; canvas2.height = h; const ctx2 = canvas2.getContext('2d')!; ctx2.clearRect(0,0,w,h);
+			const pad = 8; const w = 1024, h = 256; const canvas2 = document.createElement('canvas'); canvas2.width = w; canvas2.height = h; const ctx2 = canvas2.getContext('2d', { willReadFrequently: true } as any)!; ctx2.clearRect(0,0,w,h);
 			let x = 32; const y = h/2 + 16;
 			for (const ch of str) {
 				const key = fontFamily + '|' + ch;
