@@ -4,7 +4,7 @@ import { briefFromPrompt } from '../agents/brief';
 import { measureFps } from '../utils/perf';
 
 export type TexSource = { kind: 'image'|'video'; src: string };
-export type Preset = { id: string; name: string; params: Record<string, number> };
+export type Preset = { id: string; name: string; params: Record<string, number>; thumb?: string };
 
 export type StylePack = {
 	palette: string[];
