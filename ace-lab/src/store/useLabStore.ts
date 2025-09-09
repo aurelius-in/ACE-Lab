@@ -87,9 +87,10 @@ export const useLabStore = create<LabState>((set, get) => ({
 		let params = { ...current.params };
 		if (id === 'crosszoom') { params.zoomStrength = params.zoomStrength ?? 0.8; params.samples = params.samples ?? 16; }
 		if (id === 'halftone') { params.dotScale = params.dotScale ?? 8; params.angleRad = params.angleRad ?? 0.6; params.contrast = params.contrast ?? 1.0; params.invert01 = params.invert01 ?? 0; }
+		if (id === 'vhs') { (params as any).aberration = (params as any).aberration ?? 0.6; (params as any).noise = (params as any).noise ?? 0.25; (params as any).scanline = (params as any).scanline ?? 0.3; (params as any).vignette = (params as any).vignette ?? 0.25; }
 		return { effect: { ...current, id, params } } as Partial<LabState> as any;
 	}),
-	applyPreset: (p) => set(() => ({ effect: { id: p.id, params: p.params, mix: 0 } })),
+	applyPreset: (p) => set((s) => ({ effect: { id: s.effect.id, params: { ...s.effect.params, ...p.params }, mix: 0 } })),
 	record: async () => { /* handled in App for now */ },
 	runAgent: async (name) => {
 		if (name === 'TransitionAgent') { const keys = [ { t: 0.0, mix: 0 }, { t: 0.5, mix: 1 }, { t: 1.0, mix: 0 } ]; set(() => ({ timeline: { keyframes: keys } })); }
