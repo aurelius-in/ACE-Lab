@@ -51,6 +51,21 @@ npm run dev:server
 - Timeline: labeled grid, configurable snapping (Shift finer, Alt coarser) with live percent.
 - Effects: VHS block selectable; LUT support (.cube/.png); SDF text rendering.
 
+## Improvements backlog
+
+- Architect flow
+  - Blend suggested params directly post-pipeline and save as preset
+  - Visual indicators for applied suggestions
+- Presets
+  - Expanded built-ins across Print, Mobile, Cinematic, Monochrome, VHS, Text
+  - Server sync: login + bearer token; thumbs captured from canvas
+- Policy parity
+  - WASM OPA when available; server-side fallback otherwise
+  - UI surfacing of violations and one-click fix
+- CI
+  - Lint + build + server tests + e2e (Playwright) on PRs
+  - Preview artifact of dist/
+
 ## Acceptance checks (this iteration)
 
 - Load photo, apply Halftone, Record 3s → downloads WebM

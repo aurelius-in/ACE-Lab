@@ -48,6 +48,26 @@
     "id": "builtin-monochrome-print",
     "name": "Monochrome Print",
     "params": { "dotScale": 10, "angleRad": 0.5, "contrast": 1.15, "invert01": 1 }
+  },
+  {
+    "id": "builtin-cinematic-crisp",
+    "name": "Cinematic Crisp",
+    "params": { "bloomStrength": 0.28, "bloomThreshold": 0.68, "grainAmount": 0.02, "lutAmount": 0.18 }
+  },
+  {
+    "id": "builtin-vhs-warm-noise",
+    "name": "VHS Warm Noise",
+    "params": { "aberration": 0.5, "noise": 0.3, "scanline": 0.25, "vignette": 0.22 }
+  },
+  {
+    "id": "builtin-textwave-caption",
+    "name": "Textwave Caption",
+    "params": { "amp": 6, "freq": 8, "speed": 1.2, "outlinePx": 1 }
+  },
+  {
+    "id": "builtin-print-zine",
+    "name": "Print Zine",
+    "params": { "dotScale": 11, "angleRad": 0.6, "contrast": 1.05, "invert01": 0 }
   }
 ]
 

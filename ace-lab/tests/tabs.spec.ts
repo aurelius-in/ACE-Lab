@@ -7,4 +7,7 @@ test('switch tabs and open keyboard overlay', async ({ page }) => {
 	await expect(page.getByText('Architect proposals')).toBeVisible();
 	await page.keyboard.press('h');
 	await expect(page.getByLabel('Keyboard shortcuts overlay')).toBeVisible();
+	// toggle off
+	await page.keyboard.press('h');
+	await expect(page.getByLabel('Keyboard shortcuts overlay')).toHaveCount(0);
 });

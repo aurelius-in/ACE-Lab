@@ -9,6 +9,11 @@ export async function runPipeline() {
 	await runAgent('TransitionAgent');
 	await runAgent('PerfAgent');
 	await runAgent('PolicyAgent');
+	// Apply architect suggestions directly to current effect as final touch
+	const s = useLabStore.getState();
+	const suggested = { bloomThreshold: 0.62, grainAmount: 0.045, lutAmount: 0.23 } as Record<string, number>;
+	s.setEffectId(s.effect.id);
+	s.applyPreset({ id: 'ai-architect-final', name: 'Architect Final Touch', params: suggested });
 }
 
 export async function applyAceLook(){
