@@ -19,6 +19,7 @@ function App() {
 	const togglePlay = useLabStore(s => s.togglePlay)
 	const setPlayhead = useLabStore(s => s.setPlayhead)
 	const buildPack = useLabStore(s => s.buildStylePack)
+	const toast = useLabStore(s => s.toast)
 
 	async function handleExport() {
 		const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
@@ -57,6 +58,7 @@ function App() {
 				case 'r': case 'R': handleRecord(3); break;
 				case '6': handleRecord(6); break;
 				case 's': case 'S': downloadJson('ace-style-pack.json', buildPack()); break;
+				case 'a': case 'A': import('./agents/pipeline').then(m => m.applyAceLook()); break;
 			}
 		}
 		window.addEventListener('keydown', onKey);
@@ -90,6 +92,11 @@ function App() {
 			)}
 			{tab === 'Library' && (
 				<div className="p-4">Manage loaded media on the right</div>
+			)}
+			{toast && (
+				<div className="fixed bottom-4 right-4 px-3 py-2 rounded-xl bg-black/70 border border-white/10 shadow-lg">
+					<span className="ace-gradient-text text-sm">{toast.message}</span>
+				</div>
 			)}
 		</AppShell>
 	)

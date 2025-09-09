@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLabStore } from '../../store/useLabStore';
+import { downloadJson } from '../../utils/media';
 
 export default function PresetsPanel(){
 	const presets = useLabStore(s => s.presets);
@@ -7,10 +8,25 @@ export default function PresetsPanel(){
 	const setEffectId = useLabStore(s => s.setEffectId);
 	const setTextParam = useLabStore(s => s.setTextParam);
 	const toggleText = useLabStore(s => s.toggleText);
+	const fileRef = useRef<HTMLInputElement|null>(null);
 	const [builtin, setBuiltin] = useState<{ id: string; name: string; params: Record<string, number> }[]>([]);
 	useEffect(() => {
 		import('./builtin.json').then(m => setBuiltin(m.default as any)).catch(()=>{});
 	}, []);
+	function onExport(){
+		downloadJson('ace-presets.json', presets);
+	}
+	async function onImport(ev: React.ChangeEvent<HTMLInputElement>){
+		const f = ev.target.files?.[0]; if (!f) return;
+		try {
+			const txt = await f.text();
+			const data = JSON.parse(txt);
+			if (!Array.isArray(data)) throw new Error('Invalid');
+			const cleaned = data.filter((p)=> p && typeof p.id==='string' && typeof p.name==='string' && typeof p.params==='object');
+			(useLabStore.setState as any)({ presets: cleaned });
+		} catch {}
+		finally { if (fileRef.current) fileRef.current.value = ''; }
+	}
 	return (
 		<div className="space-y-4">
 			<div>
@@ -30,7 +46,14 @@ export default function PresetsPanel(){
 				</div>
 			</div>
 			<div>
-				<h3 className="text-sm text-white/70 mb-2">Your Presets</h3>
+				<div className="flex items-center justify-between mb-2">
+					<h3 className="text-sm text-white/70">Your Presets</h3>
+					<div className="flex gap-2">
+						<button className="btn-primary" onClick={onExport}>Export</button>
+						<button className="btn-primary" onClick={()=>fileRef.current?.click()}>Import</button>
+						<input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={onImport} />
+					</div>
+				</div>
 				{presets.length === 0 ? <div className="text-white/60">None yet</div> : (
 					<div className="flex flex-wrap gap-2">
 						{presets.map(p => (
