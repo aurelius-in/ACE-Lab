@@ -18,7 +18,7 @@ type TextParams = { amp: number; freq: number; speed: number; outlinePx: number 
 type LabState = {
 	media: { primary?: TexSource; secondary?: TexSource };
 	effect: { id: string; params: Record<string, number>; mix: number };
-	assets?: { lutSrc?: string };
+	assets?: { lutSrc?: string; lutFavorites?: string[] };
 	timeline: { keyframes: { t: number; mix: number }[] };
 	play: { t: number; playing: boolean };
 	fps: number; gpuMs?: number;
@@ -62,6 +62,8 @@ type LabState = {
 	setTimelineEasing?: (e: 'linear'|'easeIn'|'easeOut'|'easeInOut') => void;
 	clearAgentLog?: () => void;
 	clearAgentTraces?: () => void;
+	addLutFavorite?: (url: string) => void;
+	removeLutFavorite?: (url: string) => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -148,11 +150,13 @@ export const useLabStore = create<LabState>((set, get) => ({
 	resetDefaults: () => set(() => ({ effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0, bloomStrength: 0.25, lutAmount: 0.2, bloomThreshold: 0.7, grainAmount: 0.05, vignette01: 1 }, mix: 0 }, timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] }, play: { t: 0, playing: true }, text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 }, font: 'Poppins' }, exportSettings: { bitrateKbps: 6000 } })),
 	hydrateFrom: (p) => set(() => ({ effect: p.effect ? { ...get().effect, ...p.effect } : get().effect, timeline: p.timeline ? { keyframes: p.timeline.keyframes } : get().timeline, text: p.text ? { ...get().text, ...p.text } : get().text, device: p.device ?? get().device, exportSettings: p.exportSettings ?? get().exportSettings, play: p.play ?? get().play })),
 	setNoiseOpacity: (v) => { document.documentElement.style.setProperty('--noise-opacity', String(Math.max(0, Math.min(0.2, v)))); },
-	setLutSrc: (src) => set((s) => ({ assets: { ...(s.assets ?? {}), lutSrc: src } })),
+	setLutSrc: (src) => set((s) => ({ assets: { ...(s.assets ?? {}), lutSrc: src, lutFavorites: s.assets?.lutFavorites } })),
 	showToast: (message: string) => { set({ toast: { message, t: Date.now() } }); setTimeout(() => { const cur = get().toast; if (cur && Date.now() - cur.t >= 1800) { set({ toast: undefined }); } }, 2000); },
 	setTimelineEasing: (e) => set(() => ({ timelineEasing: e })),
 	clearAgentLog: () => set(() => ({ agentLog: [] })),
 	clearAgentTraces: () => set(() => ({ agentTraces: [] })),
+	addLutFavorite: (url: string) => set((s)=> ({ assets: { ...(s.assets||{}), lutSrc: s.assets?.lutSrc, lutFavorites: Array.from(new Set([...(s.assets?.lutFavorites||[]), url])) } })),
+	removeLutFavorite: (url: string) => set((s)=> ({ assets: { ...(s.assets||{}), lutSrc: s.assets?.lutSrc, lutFavorites: (s.assets?.lutFavorites||[]).filter(u=>u!==url) } })),
 }));
 
 
