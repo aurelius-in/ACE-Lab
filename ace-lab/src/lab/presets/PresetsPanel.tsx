@@ -37,7 +37,11 @@ export default function PresetsPanel(){
 		try { const r = await fetch('http://localhost:4000/presets'); const j = await r.json(); setState({ presets: j }); showToast?.('Loaded presets from server'); } catch {}
 	}
 	async function pushToServer(preset: { id: string; name: string; params: Record<string, number>; thumb?: string }){
-		try { await fetch('http://localhost:4000/presets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(preset) }); showToast?.('Synced to server'); } catch {}
+		try {
+			const t = localStorage.getItem('ace-token');
+			await fetch('http://localhost:4000/presets', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify(preset) });
+			showToast?.('Synced to server');
+		} catch {}
 	}
 
 	function onExport(){

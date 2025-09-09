@@ -10,6 +10,14 @@ function Persistor(){
 	useEffect(()=>{
 		const raw = localStorage.getItem('ace-lab-state');
 		if (raw) { try { const obj = JSON.parse(raw); useLabStore.getState().hydrateFrom(obj); } catch {} }
+		// Auto-login to backend and cache token for 1h
+		const hasToken = localStorage.getItem('ace-token');
+		if (!hasToken) {
+			fetch('http://localhost:4000/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'ace-user' }) })
+				.then(r=>r.ok?r.json():null)
+				.then(j=>{ if (j?.token) localStorage.setItem('ace-token', j.token); })
+				.catch(()=>{});
+		}
 	}, [])
 	return null
 }
