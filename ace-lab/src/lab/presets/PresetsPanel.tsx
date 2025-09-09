@@ -22,7 +22,7 @@ export default function PresetsPanel(){
 	async function refreshFromServer(){
 		try { const r = await fetch('http://localhost:4000/presets'); const j = await r.json(); setState({ presets: j }); showToast?.('Loaded presets from server'); } catch {}
 	}
-	async function pushToServer(preset: { id: string; name: string; params: Record<string, number> }){
+	async function pushToServer(preset: { id: string; name: string; params: Record<string, number>; thumb?: string }){
 		try { await fetch('http://localhost:4000/presets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(preset) }); showToast?.('Synced to server'); } catch {}
 	}
 
@@ -40,12 +40,26 @@ export default function PresetsPanel(){
 		} catch {}
 		finally { if (fileRef.current) fileRef.current.value = ''; }
 	}
-	function saveCurrent(){
+	async function saveCurrent(){
 		const id = `user-${Date.now()}`;
-		const preset = { id, name: newName.trim() || 'My ACE Preset', params: { ...effect.params } };
+		// capture tiny preview of current canvas
+		let thumb: string | undefined;
+		const canvas = document.querySelector('canvas') as HTMLCanvasElement | null;
+		if (canvas) {
+			const off = document.createElement('canvas'); off.width = 128; off.height = Math.round(128 * canvas.height / canvas.width);
+			off.getContext('2d')!.drawImage(canvas, 0, 0, off.width, off.height);
+			thumb = off.toDataURL('image/png');
+		}
+		const preset = { id, name: newName.trim() || 'My ACE Preset', params: { ...effect.params }, thumb };
 		setState({ presets: [...presets, preset] });
 		if (useServer) pushToServer(preset);
 		showToast?.('Preset saved');
+	}
+	function applyMobileSafe(){
+		const p = { ...(effect.params as any) };
+		if ('samples' in p) p.samples = Math.max(8, Math.floor((p.samples ?? 16) * 0.7));
+		setState({ effect: { ...effect, params: p } });
+		showToast?.('Mobile-safe applied');
 	}
 	return (
 		<div className="space-y-4">
@@ -70,6 +84,7 @@ export default function PresetsPanel(){
 					<h3 className="text-sm text-white/70">Your Presets</h3>
 					<div className="flex gap-2 items-center">
 						<label className="text-xs text-white/70 flex items-center gap-1"><input type="checkbox" checked={useServer} onChange={(e)=>{ setUseServer(e.target.checked); if (e.target.checked) refreshFromServer(); }} /> server</label>
+						<button className="btn-primary" onClick={applyMobileSafe}>Apply Mobile-safe</button>
 						<button className="btn-primary" onClick={onExport}>Export</button>
 						<button className="btn-primary" onClick={()=>fileRef.current?.click()}>Import</button>
 						<input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={onImport} />
@@ -82,8 +97,9 @@ export default function PresetsPanel(){
 				{presets.length === 0 ? <div className="text-white/60">None yet</div> : (
 					<div className="flex flex-wrap gap-2">
 						{presets.map(p => (
-							<button key={p.id} onClick={() => apply(p)} className="px-3 py-1 rounded-full border border-white/10 ace-gradient-text">
-								{p.name}
+							<button key={p.id} onClick={() => apply(p)} className="px-2 py-2 rounded-xl border border-white/10 bg-black/30 hover:bg-black/40 flex items-center gap-2">
+								{p.thumb ? <img src={p.thumb} alt="thumb" className="w-8 h-8 object-cover rounded" /> : <span className="w-8 h-8 rounded bg-white/10" />}
+								<span className="ace-gradient-text text-sm">{p.name}</span>
 							</button>
 						))}
 					</div>
