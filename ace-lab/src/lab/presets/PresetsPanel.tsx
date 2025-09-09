@@ -12,11 +12,20 @@ export default function PresetsPanel(){
 	const setState = useLabStore.setState as (p: any) => void;
 	const showToast = useLabStore(s => s.showToast);
 	const [newName, setNewName] = useState('My ACE Preset');
+	const [useServer, setUseServer] = useState(false);
 	const fileRef = useRef<HTMLInputElement|null>(null);
 	const [builtin, setBuiltin] = useState<{ id: string; name: string; params: Record<string, number> }[]>([]);
 	useEffect(() => {
 		import('./builtin.json').then(m => setBuiltin(m.default as any)).catch(()=>{});
 	}, []);
+
+	async function refreshFromServer(){
+		try { const r = await fetch('http://localhost:4000/presets'); const j = await r.json(); setState({ presets: j }); showToast?.('Loaded presets from server'); } catch {}
+	}
+	async function pushToServer(preset: { id: string; name: string; params: Record<string, number> }){
+		try { await fetch('http://localhost:4000/presets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(preset) }); showToast?.('Synced to server'); } catch {}
+	}
+
 	function onExport(){
 		downloadJson('ace-presets.json', presets);
 	}
@@ -35,6 +44,7 @@ export default function PresetsPanel(){
 		const id = `user-${Date.now()}`;
 		const preset = { id, name: newName.trim() || 'My ACE Preset', params: { ...effect.params } };
 		setState({ presets: [...presets, preset] });
+		if (useServer) pushToServer(preset);
 		showToast?.('Preset saved');
 	}
 	return (
@@ -58,7 +68,8 @@ export default function PresetsPanel(){
 			<div>
 				<div className="flex items-center justify-between mb-2">
 					<h3 className="text-sm text-white/70">Your Presets</h3>
-					<div className="flex gap-2">
+					<div className="flex gap-2 items-center">
+						<label className="text-xs text-white/70 flex items-center gap-1"><input type="checkbox" checked={useServer} onChange={(e)=>{ setUseServer(e.target.checked); if (e.target.checked) refreshFromServer(); }} /> server</label>
 						<button className="btn-primary" onClick={onExport}>Export</button>
 						<button className="btn-primary" onClick={()=>fileRef.current?.click()}>Import</button>
 						<input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={onImport} />
