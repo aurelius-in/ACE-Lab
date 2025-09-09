@@ -6,8 +6,9 @@ import TextControls from './TextControls';
 import { useLabStore } from '../store/useLabStore';
 import AgentsPanel from './copilot/AgentsPanel';
 import PolicyPanel from './policy/PolicyPanel';
+import SettingsPanel from './SettingsPanel';
 
-const tabs = ['Effects','Text','Presets','Co-pilot','Agents','Policy'] as const;
+const tabs = ['Effects','Text','Presets','Co-pilot','Agents','Policy','Settings'] as const;
 type Tab = typeof tabs[number];
 
 export default function RightPanelTabs(){
@@ -41,6 +42,7 @@ export default function RightPanelTabs(){
 			{tab==='Co-pilot' && <CopilotPanel/>}
 			{tab==='Agents' && <AgentsPanel/>}
 			{tab==='Policy' && <PolicyPanel/>}
+			{tab==='Settings' && <SettingsPanel/>}
 		</div>
 	);
 }

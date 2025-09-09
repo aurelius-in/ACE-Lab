@@ -20,23 +20,34 @@ function App() {
 	const setPlayhead = useLabStore(s => s.setPlayhead)
 	const buildPack = useLabStore(s => s.buildStylePack)
 	const toast = useLabStore(s => s.toast)
+	const exportSettings = useLabStore(s => s.exportSettings)
+	const [exportProgress, setExportProgress] = useState<number>(0)
+	const [exporting, setExporting] = useState<boolean>(false)
+	const [aborter, setAborter] = useState<AbortController | null>(null)
 
 	async function handleExport() {
 		const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
 		if (!canvas) return alert('Nothing to export')
 		const res = await check(canvas.width, canvas.height)
 		let blob: Blob
-		if (!res.allowed && device === 'mobile') {
-			const fixed = res.fix ? res.fix() : { width: 1920, height: Math.round(1920 / canvas.width * canvas.height) }
-			blob = await captureScaledWebmFromCanvas(canvas, fixed.width, 3)
-		} else {
-			blob = await captureCanvasWebm(canvas, 3)
+		const ctrl = new AbortController(); setAborter(ctrl); setExporting(true); setExportProgress(0)
+		const common = { bitrateKbps: exportSettings.bitrateKbps ?? 6000, onProgress: (p:number)=>setExportProgress(p), signal: ctrl.signal }
+		try {
+			if (!res.allowed && device === 'mobile') {
+				const fixed = res.fix ? res.fix() : { width: 1920, height: Math.round(1920 / canvas.width * canvas.height) }
+				blob = await captureScaledWebmFromCanvas(canvas, fixed.width, 3, common)
+			} else {
+				blob = await captureCanvasWebm(canvas, 3, common)
+			}
+			const url = URL.createObjectURL(blob)
+			const a = document.createElement('a')
+			a.href = url; a.download = `ace-export.webm`; a.click()
+			URL.revokeObjectURL(url)
+		} finally {
+			setExporting(false); setAborter(null); setExportProgress(0)
 		}
-		const url = URL.createObjectURL(blob)
-		const a = document.createElement('a')
-		a.href = url; a.download = `ace-export.webm`; a.click()
-		URL.revokeObjectURL(url)
 	}
+	function abortExport(){ aborter?.abort(); }
 	async function handleRecord(seconds: number) {
 		const canvas = document.querySelector('canvas')
 		if (!canvas) return
@@ -96,6 +107,14 @@ function App() {
 			{toast && (
 				<div className="fixed bottom-4 right-4 px-3 py-2 rounded-xl bg-black/70 border border-white/10 shadow-lg">
 					<span className="ace-gradient-text text-sm">{toast.message}</span>
+				</div>
+			)}
+			{exporting && (
+				<div className="fixed bottom-4 left-1/2 -translate-x-1/2 px-3 py-2 rounded-xl bg-black/70 border border-white/10 shadow-lg flex items-center gap-2">
+					<div className="w-40 h-2 bg-white/10 rounded">
+						<div className="h-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded" style={{ width: `${Math.round(exportProgress*100)}%` }} />
+					</div>
+					<button className="btn-primary" onClick={abortExport}>Abort</button>
 				</div>
 			)}
 		</AppShell>

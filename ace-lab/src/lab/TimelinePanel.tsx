@@ -9,6 +9,7 @@ export default function TimelinePanel() {
 	const togglePlay = useLabStore(s => s.togglePlay);
 	const barRef = useRef<HTMLDivElement|null>(null);
 	const [dragIdx, setDragIdx] = useState<number|null>(null);
+	const baseSnap = Number(localStorage.getItem('ace.snapStep') || '0.05');
 
 	function onDown(_e: React.MouseEvent, idx: number){
 		const bar = barRef.current; if (!bar) return;
@@ -17,8 +18,8 @@ export default function TimelinePanel() {
 		function move(ev: MouseEvent){
 			const dx = ev.clientX - rect.left;
 			let t = Math.max(0, Math.min(1, dx / rect.width));
-			// snapping: default 0.05, Shift = finer 0.01, Alt = coarse 0.1
-			const step = ev.shiftKey ? 0.01 : (ev.altKey ? 0.1 : 0.05);
+			// snapping: default from settings, Shift = finer 0.25x, Alt = coarse 2x
+			const step = ev.shiftKey ? baseSnap*0.25 : (ev.altKey ? baseSnap*2 : baseSnap);
 			t = Math.round(t / step) * step;
 			const next = keyframes.map((k, i) => i===idx ? { ...k, t } : k);
 			setTimeline({ timeline: { keyframes: next } });

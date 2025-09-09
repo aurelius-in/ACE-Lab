@@ -1,27 +1,35 @@
 export async function loadImage(src: string): Promise<HTMLImageElement> {
 	return new Promise((resolve, reject) => {
 		const img = new Image();
-		img.crossOrigin = 'anonymous';
 		img.onload = () => resolve(img);
 		img.onerror = reject;
 		img.src = src;
 	});
 }
 
-export async function captureCanvasWebm(canvas: HTMLCanvasElement, seconds: number): Promise<Blob> {
+type RecordOptions = { bitrateKbps?: number; onProgress?: (p: number) => void; signal?: AbortSignal };
+
+export async function captureCanvasWebm(canvas: HTMLCanvasElement, seconds: number, opts: RecordOptions = {}): Promise<Blob> {
 	const stream = (canvas as any).captureStream ? (canvas as any).captureStream(60) : null;
 	if (!stream) throw new Error('captureStream not supported');
-	const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+	const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', bitsPerSecond: opts.bitrateKbps ? opts.bitrateKbps * 1000 : undefined } as any);
 	const chunks: Blob[] = [];
 	recorder.ondataavailable = (e) => chunks.push(e.data);
 	recorder.start();
-	await new Promise((r) => setTimeout(r, seconds * 1000));
-	recorder.stop();
+	const start = performance.now();
+	let stopped = false;
+	const stop = () => { if (!stopped) { stopped = true; try { recorder.stop(); } catch {} } };
+	if (opts.signal) { opts.signal.addEventListener('abort', stop, { once: true }); }
+	while (!stopped && performance.now() - start < seconds * 1000) {
+		if (opts.onProgress) opts.onProgress(Math.min(1, (performance.now() - start) / (seconds * 1000)));
+		await new Promise(r => setTimeout(r, 100));
+	}
+	stop();
 	await new Promise((r) => (recorder.onstop = () => r(null)));
 	return new Blob(chunks, { type: 'video/webm' });
 }
 
-export async function captureScaledWebmFromCanvas(source: HTMLCanvasElement, targetWidth: number, seconds: number): Promise<Blob> {
+export async function captureScaledWebmFromCanvas(source: HTMLCanvasElement, targetWidth: number, seconds: number, opts: RecordOptions = {}): Promise<Blob> {
 	const scale = targetWidth / source.width;
 	const w = Math.round(targetWidth);
 	const h = Math.round(source.height * scale);
@@ -30,25 +38,31 @@ export async function captureScaledWebmFromCanvas(source: HTMLCanvasElement, tar
 	const ctx = off.getContext('2d') as CanvasRenderingContext2D;
 	const stream = (off as any).captureStream ? (off as any).captureStream(60) : null;
 	if (!stream) throw new Error('captureStream not supported');
-	const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+	const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', bitsPerSecond: opts.bitrateKbps ? opts.bitrateKbps * 1000 : undefined } as any);
 	const chunks: Blob[] = [];
 	recorder.ondataavailable = (e) => chunks.push(e.data);
 	recorder.start();
 	const start = performance.now();
+	let stopped = false;
+	const stop = () => { if (!stopped) { stopped = true; try { recorder.stop(); } catch {} } };
+	if (opts.signal) { opts.signal.addEventListener('abort', stop, { once: true }); }
 	function draw() {
 		ctx.clearRect(0,0,w,h);
 		ctx.drawImage(source, 0, 0, w, h);
-		if (performance.now() - start < seconds * 1000) requestAnimationFrame(draw);
+		if (!stopped && performance.now() - start < seconds * 1000) requestAnimationFrame(draw);
 	}
 	draw();
-	await new Promise((r) => setTimeout(r, seconds * 1000));
-	recorder.stop();
+	while (!stopped && performance.now() - start < seconds * 1000) {
+		if (opts.onProgress) opts.onProgress(Math.min(1, (performance.now() - start) / (seconds * 1000)));
+		await new Promise(r => setTimeout(r, 100));
+	}
+	stop();
 	await new Promise((r) => (recorder.onstop = () => r(null)));
 	return new Blob(chunks, { type: 'video/webm' });
 }
 
 export async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-	return new Promise((resolve) => canvas.toBlob((b) => resolve(b as Blob), 'image/png'));
+	return new Promise((resolve) => canvas.toBlob((b)=> resolve(b || new Blob()), 'image/png'));
 }
 
 export function downloadBlob(filename: string, blob: Blob) {
@@ -58,9 +72,10 @@ export function downloadBlob(filename: string, blob: Blob) {
 	URL.revokeObjectURL(url);
 }
 
-export function downloadJson(filename: string, data: unknown) {
+export function downloadJson(filename: string, data: unknown){
 	const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-	downloadBlob(filename, blob);
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
 }
 
 
