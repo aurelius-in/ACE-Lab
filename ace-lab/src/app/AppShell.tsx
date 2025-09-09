@@ -39,10 +39,10 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 				<div style={{height:1, background: 'linear-gradient(90deg, var(--ace-g1), var(--ace-g3))'}} />
 			</header>
 			<main className="container mx-auto py-6 grid grid-cols-1 lg:grid-cols-12 gap-4">
-				<section className="lg:col-span-8 relative card-dark p-2">
+				<section className="lg:col-span-8 relative card-dark p-2 animate-fade-in animate-slide-up">
 					{children}
 				</section>
-				<aside className="lg:col-span-4 card-dark p-4">{rightSlot}</aside>
+				<aside className="lg:col-span-4 card-dark p-4 animate-fade-in animate-slide-up">{rightSlot}</aside>
 			</main>
 		</div>
 	);

@@ -11,7 +11,7 @@
     "server": "node server/index.mjs",
     "dev:server": "set PORT=4000; node server/index.mjs | cat",
     "test": "node --test server/tests/**/*.mjs",
-    "e2e": "start /B cmd /C vite & npx playwright test"
+    "e2e": "start /B cmd /C vite --port 5173 & npx playwright test"
   },
   "dependencies": {
     "clsx": "^2.1.1",

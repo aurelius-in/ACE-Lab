@@ -62,10 +62,13 @@ export default function PresetsPanel(){
 		showToast?.('Mobile-safe applied');
 	}
 	return (
-		<div className="space-y-4">
+		<div className="space-y-4 animate-fade-in animate-slide-up">
 			<div>
 				<h3 className="text-sm text-white/70 mb-2">Built-in</h3>
 				<div className="flex flex-wrap gap-2">
+					{builtin.length === 0 && (
+						<div className="text-white/60 text-sm">Loading built-in presets…</div>
+					)}
 					{builtin.map(p => (
 						<button key={p.id} onClick={() => {
 							if (p.id.startsWith('builtin-crosszoom')) setEffectId('crosszoom');
@@ -94,10 +97,12 @@ export default function PresetsPanel(){
 					<input value={newName} onChange={(e)=>setNewName(e.target.value)} placeholder="Preset name" className="rounded-xl bg-black/30 border border-white/10 p-2 text-sm" />
 					<button className="btn-primary" onClick={saveCurrent}>Save as preset</button>
 				</div>
-				{presets.length === 0 ? <div className="text-white/60">None yet</div> : (
+				{presets.length === 0 ? (
+					<div className="text-white/60 text-sm animate-fade-in">No presets yet. Tweak controls and click “Save as preset”.</div>
+				) : (
 					<div className="flex flex-wrap gap-2">
 						{presets.map(p => (
-							<button key={p.id} onClick={() => apply(p)} className="px-2 py-2 rounded-xl border border-white/10 bg-black/30 hover:bg-black/40 flex items-center gap-2">
+							<button key={p.id} onClick={() => apply(p)} className="px-2 py-2 rounded-xl border border-white/10 bg-black/30 hover:bg-black/40 flex items-center gap-2 animate-fade-in">
 								{p.thumb ? <img src={p.thumb} alt="thumb" className="w-8 h-8 object-cover rounded" /> : <span className="w-8 h-8 rounded bg-white/10" />}
 								<span className="ace-gradient-text text-sm">{p.name}</span>
 							</button>

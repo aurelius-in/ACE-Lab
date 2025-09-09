@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "test-1",
+    "name": "Test",
+    "params": {
+      "dotScale": 8
+    }
+  },
+  {
+    "id": "test-1",
+    "name": "Test",
+    "params": {
+      "dotScale": 8
+    }
+  }
+]
