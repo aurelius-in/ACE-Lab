@@ -1,6 +1,13 @@
 import { useLabStore } from '../store/useLabStore';
 import { useRef, useState } from 'react';
 
+function ease(t: number, mode: 'linear'|'easeIn'|'easeOut'|'easeInOut'){
+	if (mode === 'easeIn') return t*t;
+	if (mode === 'easeOut') return 1 - (1-t)*(1-t);
+	if (mode === 'easeInOut') return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+	return t;
+}
+
 export default function TimelinePanel() {
 	const keyframes = useLabStore(s => s.timeline.keyframes);
 	const setTimeline = useLabStore.setState as (partial: any) => void;
@@ -10,6 +17,8 @@ export default function TimelinePanel() {
 	const barRef = useRef<HTMLDivElement|null>(null);
 	const [dragIdx, setDragIdx] = useState<number|null>(null);
 	const baseSnap = Number(localStorage.getItem('ace.snapStep') || '0.05');
+	const easingMode = useLabStore(s => s.timelineEasing) || 'linear';
+	const setEasing = useLabStore(s => s.setTimelineEasing!);
 
 	function addKeyframeAt(clientX: number){
 		const bar = barRef.current; if (!bar) return;
@@ -51,11 +60,31 @@ export default function TimelinePanel() {
 		onDown(e,i);
 	}
 
+	// Compute mix based on keyframes and easing
+	function mixAt(t: number){
+		const keys = keyframes; if(keys.length===0) return 0; let prev = keys[0];
+		for (let i=1;i<keys.length;i++){
+			const cur = keys[i];
+			if (t<=cur.t){ const span = cur.t - prev.t || 1; const local = (t - prev.t)/span; const shaped = ease(Math.max(0, Math.min(1, local)), easingMode), val = prev.mix*(1-shaped)+cur.mix*shaped; return val; }
+			prev = cur;
+		}
+		return keys[keys.length-1].mix;
+	}
+
 	return (
 		<div className="mt-4">
 			<div className="flex items-center justify-between mb-2">
 				<h2 className="text-lg font-semibold ace-gradient-text">Timeline</h2>
 				<div className="flex items-center gap-2">
+					<label className="text-xs text-white/70 flex items-center gap-1">
+						<span>Easing</span>
+						<select value={easingMode} onChange={(e)=>setEasing(e.target.value as any)} className="px-2 py-1 rounded bg-black/30 border border-white/10">
+							<option value="linear">Linear</option>
+							<option value="easeIn">Ease In</option>
+							<option value="easeOut">Ease Out</option>
+							<option value="easeInOut">Ease In Out</option>
+						</select>
+					</label>
 					<button className="btn-primary" onClick={togglePlay}>{play.playing ? 'Pause' : 'Play'}</button>
 					<input type="range" min={0} max={1} step={0.001} value={play.t} onChange={(e)=>setPlayhead(Number(e.target.value))} className="w-48" />
 				</div>
