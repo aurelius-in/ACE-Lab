@@ -1,4 +1,5 @@
 import { useLabStore } from '../store/useLabStore';
+import { cubeTextToDataURL } from '../utils/lut';
 
 export default function ControlsPanel() {
 	const effect = useLabStore(s => s.effect);
@@ -11,7 +12,13 @@ export default function ControlsPanel() {
 	function onFile(e: React.ChangeEvent<HTMLInputElement>, which: 'primary'|'secondary'|'lut') {
 		const f = e.target.files?.[0]; if (!f) return;
 		const url = URL.createObjectURL(f);
-		if (which==='primary') setPrimary(url); else if (which==='secondary') setSecondary(url); else setLutSrc(url);
+		if (which==='primary') setPrimary(url); else if (which==='secondary') setSecondary(url); else {
+			if (f.name.toLowerCase().endsWith('.cube')) {
+				f.text().then(cubeTextToDataURL).then(setLutSrc);
+			} else {
+				setLutSrc(url);
+			}
+		}
 	}
 
 	return (

@@ -23,7 +23,7 @@ function App() {
 	async function handleExport() {
 		const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
 		if (!canvas) return alert('Nothing to export')
-		const res = check(canvas.width, canvas.height)
+		const res = await check(canvas.width, canvas.height)
 		let blob: Blob
 		if (!res.allowed && device === 'mobile') {
 			const fixed = res.fix ? res.fix() : { width: 1920, height: Math.round(1920 / canvas.width * canvas.height) }
