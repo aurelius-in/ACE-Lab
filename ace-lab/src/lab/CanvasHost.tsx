@@ -63,8 +63,9 @@ export default function CanvasHost() {
 				ctx2.drawImage(off, x, y - sdf.size/2);
 				x += sdf.size + pad;
 			}
-			gl.bindTexture(gl.TEXTURE_2D, textTex);
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas2);
+			const g = gl as WebGL2RenderingContext;
+			g.bindTexture(g.TEXTURE_2D, textTex);
+			g.texImage2D(g.TEXTURE_2D, 0, g.RGBA, g.RGBA, g.UNSIGNED_BYTE, canvas2);
 		}
 		buildSdfTexture();
 
