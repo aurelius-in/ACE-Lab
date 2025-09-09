@@ -7,6 +7,7 @@ import { useLabStore } from '../store/useLabStore';
 import AgentsPanel from './copilot/AgentsPanel';
 import PolicyPanel from './policy/PolicyPanel';
 import SettingsPanel from './SettingsPanel';
+import LutGallery from './LutGallery';
 
 const tabs = ['Effects','Text','Presets','Co-pilot','Agents','Policy','Settings'] as const;
 type Tab = typeof tabs[number];
@@ -34,6 +35,7 @@ export default function RightPanelTabs(){
 						</select>
 					</label>
 					<ControlsPanel/>
+					<LutGallery/>
 					<div className="flex justify-end"><button className="btn-primary" onClick={reset}>Reset</button></div>
 				</div>
 			)}

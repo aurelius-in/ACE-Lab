@@ -1,18 +1,23 @@
 import { useLabStore } from '../../store/useLabStore';
+import AgentTraces from './AgentTraces';
 
 export default function AgentsPanel(){
 	const runAgent = useLabStore(s => s.runAgent);
 	const logs = useLabStore(s => s.agentLog) || [];
+	const clear = useLabStore(s => s.clearAgentLog!);
 	return (
 		<div className="p-4 space-y-4 animate-fade-in animate-slide-up">
-			<div className="grid grid-cols-2 gap-2">
-				<button className="btn-primary" onClick={()=>runAgent('BriefAgent')}>BriefAgent</button>
-				<button className="btn-primary" onClick={()=>runAgent('ArchitectAgent')}>ArchitectAgent</button>
-				<button className="btn-primary" onClick={()=>runAgent('PerfAgent')}>PerfAgent</button>
-				<button className="btn-primary" onClick={()=>runAgent('TransitionAgent')}>TransitionAgent</button>
-				<button className="btn-primary" onClick={()=>runAgent('PresetAgent')}>PresetAgent</button>
-				<button className="btn-primary" onClick={()=>runAgent('PolicyAgent')}>PolicyAgent</button>
-				<button className="btn-primary" onClick={()=>runAgent('QAAgent')}>QAAgent</button>
+			<div className="flex items-center justify-between">
+				<div className="grid grid-cols-2 gap-2">
+					<button className="btn-primary" onClick={()=>runAgent('BriefAgent')}>BriefAgent</button>
+					<button className="btn-primary" onClick={()=>runAgent('ArchitectAgent')}>ArchitectAgent</button>
+					<button className="btn-primary" onClick={()=>runAgent('PerfAgent')}>PerfAgent</button>
+					<button className="btn-primary" onClick={()=>runAgent('TransitionAgent')}>TransitionAgent</button>
+					<button className="btn-primary" onClick={()=>runAgent('PresetAgent')}>PresetAgent</button>
+					<button className="btn-primary" onClick={()=>runAgent('PolicyAgent')}>PolicyAgent</button>
+					<button className="btn-primary" onClick={()=>runAgent('QAAgent')}>QAAgent</button>
+				</div>
+				<button className="btn-primary" onClick={clear}>Clear Logs</button>
 			</div>
 			<div className="card-dark p-3 rounded-xl border border-white/10">
 				<h4 className="text-sm ace-gradient-text mb-2">Architect proposals</h4>
@@ -26,6 +31,7 @@ export default function AgentsPanel(){
 					<div key={i} className="text-xs text-white/80"><span className="text-white/50">{new Date(l.t).toLocaleTimeString()}</span> — <span className="ace-gradient-text">{l.name}</span>: {l.message}</div>
 				))}
 			</div>
+			<AgentTraces/>
 		</div>
 	);
 }
