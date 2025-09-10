@@ -6,6 +6,8 @@ export default function ControlsPanel() {
 	const setParam = useLabStore(s => s.setEffectParam);
 	const setPrimary = useLabStore(s => s.setPrimary);
 	const setSecondary = useLabStore(s => s.setSecondary);
+	const setPrimaryVideo = useLabStore(s => s.setPrimaryVideo);
+	const setSecondaryVideo = useLabStore(s => s.setSecondaryVideo);
 	const setNoiseOpacity = useLabStore(s => s.setNoiseOpacity);
 	const setLutSrc = useLabStore(s => s.setLutSrc!);
 	const lutSrc = useLabStore(s => s.assets?.lutSrc);
@@ -13,7 +15,11 @@ export default function ControlsPanel() {
 	function onFile(e: React.ChangeEvent<HTMLInputElement>, which: 'primary'|'secondary'|'lut') {
 		const f = e.target.files?.[0]; if (!f) return;
 		const url = URL.createObjectURL(f);
-		if (which==='primary') setPrimary(url); else if (which==='secondary') setSecondary(url); else {
+		if (which==='primary') {
+			if (f.type.startsWith('video/')) setPrimaryVideo?.(url); else setPrimary(url);
+		} else if (which==='secondary') {
+			if (f.type.startsWith('video/')) setSecondaryVideo?.(url); else setSecondary(url);
+		} else {
 			if (f.name.toLowerCase().endsWith('.cube')) {
 				f.text().then(cubeTextToDataURL).then(setLutSrc);
 			} else {
@@ -27,12 +33,12 @@ export default function ControlsPanel() {
 			<h2 className="text-lg font-semibold ace-gradient-text">Effects</h2>
 			<div className="space-y-3">
 				<label className="block text-sm">
-					<span className="text-white/70">Image A</span>
-					<input type="file" accept="image/*" onChange={(e)=>onFile(e,'primary')} className="block mt-1 text-sm" />
+					<span className="text-white/70">Image/Video A</span>
+					<input type="file" accept="image/*,video/*" onChange={(e)=>onFile(e,'primary')} className="block mt-1 text-sm" />
 				</label>
 				<label className="block text-sm">
-					<span className="text-white/70">Image B</span>
-					<input type="file" accept="image/*" onChange={(e)=>onFile(e,'secondary')} className="block mt-1 text-sm" />
+					<span className="text-white/70">Image/Video B</span>
+					<input type="file" accept="image/*,video/*" onChange={(e)=>onFile(e,'secondary')} className="block mt-1 text-sm" />
 				</label>
 				<label className="block text-sm">
 					<span className="text-white/70">LUT (PNG or .cube)</span>

@@ -48,8 +48,19 @@ export default function CanvasHost() {
 
 		const makeTex = (g: WebGL2RenderingContext) => { const t = g.createTexture()!; g.bindTexture(g.TEXTURE_2D, t); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, g.LINEAR); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.LINEAR); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE); return t; };
 		const tex0 = makeTex(gl); const tex1 = makeTex(gl); const textTex = makeTex(gl);
-		const upload = (g: WebGL2RenderingContext, url: string, to: WebGLTexture) => { const i=new Image(); i.crossOrigin='anonymous'; i.onload=()=>{ g.bindTexture(g.TEXTURE_2D,to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,i); }; i.src=url; };
-		upload(gl, media.primary?.src || '/ace-lab.webp', tex0); if (media.secondary) upload(gl, media.secondary.src, tex1);
+		const uploadImage = (g: WebGL2RenderingContext, url: string, to: WebGLTexture) => { const i=new Image(); i.crossOrigin='anonymous'; i.onload=()=>{ g.bindTexture(g.TEXTURE_2D,to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,i); }; i.src=url; };
+		const uploadVideo = (g: WebGL2RenderingContext, url: string, to: WebGLTexture) => {
+			const v = document.createElement('video');
+			v.src = url; v.muted = true; (v as any).playsInline = true; v.loop = true; v.autoplay = true; v.crossOrigin = 'anonymous';
+			v.addEventListener('loadeddata', ()=>{
+				g.bindTexture(g.TEXTURE_2D, to);
+				g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,v);
+			});
+			const update = () => { if (v.readyState >= 2) { g.bindTexture(g.TEXTURE_2D, to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,v); } requestAnimationFrame(update); };
+			update();
+		};
+		if (media.primary) { if (media.primary.kind==='video') uploadVideo(gl, media.primary.src, tex0); else uploadImage(gl, media.primary.src, tex0); } else { uploadImage(gl, '/ace-lab.webp', tex0); }
+		if (media.secondary) { if (media.secondary.kind==='video') uploadVideo(gl, media.secondary.src, tex1); else uploadImage(gl, media.secondary.src, tex1); }
 
 		// Generate SDF atlas for the whole text string using tiny-sdf (with simple cache)
 		const glyphCache = new Map<string, HTMLCanvasElement>();
