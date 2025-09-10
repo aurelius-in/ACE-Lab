@@ -41,6 +41,8 @@ type LabState = {
 	setFps: (n: number) => void;
 	setPrimary: (src: string) => void;
 	setSecondary: (src: string) => void;
+	setPrimaryVideo?: (src: string) => void;
+	setSecondaryVideo?: (src: string) => void;
 	clearPrimary: () => void;
 	clearSecondary: () => void;
 	exportPolicyCheck: (w: number, h: number) => Promise<{ allowed: boolean; message?: string; fix?: () => { width: number; height: number }, violations?: string[] }>;
@@ -122,6 +124,8 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setFps: (n) => set(() => ({ fps: n })),
 	setPrimary: (src) => set((s) => ({ media: { ...s.media, primary: { kind: 'image', src } } })),
 	setSecondary: (src) => set((s) => ({ media: { ...s.media, secondary: { kind: 'image', src } } })),
+	setPrimaryVideo: (src) => set((s) => ({ media: { ...s.media, primary: { kind: 'video', src } } })),
+	setSecondaryVideo: (src) => set((s) => ({ media: { ...s.media, secondary: { kind: 'video', src } } })),
 	clearPrimary: () => set((s) => ({ media: { ...s.media, primary: undefined } })),
 	clearSecondary: () => set((s) => ({ media: { ...s.media, secondary: undefined } })),
 	exportPolicyCheck: async (w, h) => {
