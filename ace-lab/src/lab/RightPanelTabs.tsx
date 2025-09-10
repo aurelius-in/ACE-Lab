@@ -19,9 +19,9 @@ export default function RightPanelTabs(){
 	const reset = useLabStore(s=>s.resetDefaults);
 	return (
 		<div className="space-y-4">
-			<div className="flex gap-2">
+			<div className="flex gap-2 flex-wrap">
 				{tabs.map(t => (
-					<button key={t} className={`px-3 py-1.5 rounded-2xl border border-white/10 text-sm ${tab===t? 'ace-gradient-text':'text-white/70 hover:text-white'}`} onClick={()=>setTab(t)}>{t}</button>
+					<button key={t} className="btn-chip" onClick={()=>setTab(t)}>{t}</button>
 				))}
 			</div>
 			{tab==='Effects' && (

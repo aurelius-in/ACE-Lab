@@ -92,7 +92,7 @@ function App() {
 
 	return (
 		<AppShell
-			rightSlot={tab==='Library' ? <LibraryPanel/> : <RightPanelTabs />}
+			rightSlot={tab==='Library' ? <LibraryPanel/> : <></>}
 			onExport={handleExport}
 			onRecord3={() => handleRecord(3)}
 			onRecord6={() => handleRecord(6)}
