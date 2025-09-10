@@ -8,13 +8,15 @@ import AgentsPanel from '../lab/copilot/AgentsPanel';
 import PolicyPanel from '../lab/policy/PolicyPanel';
 import SettingsPanel from '../lab/SettingsPanel';
 import LibraryPanel from '../lab/LibraryPanel';
+import { useLabStore } from '../store/useLabStore';
 
 const tabs = ['Agents', 'Library'] as const;
 export type TabKey = typeof tabs[number];
 
-export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange, device, onDeviceChange }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void, device: 'mobile'|'desktop', onDeviceChange: (d: 'mobile'|'desktop') => void }) {
+export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange, device, onDeviceChange, onEnhance }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void, device: 'mobile'|'desktop', onDeviceChange: (d: 'mobile'|'desktop') => void, onEnhance?: () => void }) {
 	const [openPanel, setOpenPanel] = useState<null | 'Effects' | 'Text' | 'Presets' | 'Co-pilot' | 'Agents' | 'Policy' | 'Settings' | 'Library'>(null);
 	const popRef = useRef<HTMLDivElement | null>(null);
+    const runAgent = useLabStore(s => s.runAgent);
 	useEffect(()=>{
 		function onDown(e: MouseEvent){
 			if (!popRef.current) return;
@@ -35,6 +37,7 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 						</div>
 					</div>
 					<nav className="strip-group" role="tablist" aria-label="Main sections">
+						<button className="btn-strip" onClick={()=>{ if (onEnhance) onEnhance(); else runAgent('ArchitectAgent'); }}>Enhance</button>
 						{tabs.map(t => (
 							<button key={t} role="tab" aria-selected={activeTab===t} className={clsx('btn-strip', activeTab===t ? '' : '')} onClick={() => {
 								if (t === 'Agents') { setOpenPanel(p=> p==='Agents'? null : 'Agents'); return; }
@@ -57,15 +60,17 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 			</header>
 			{openPanel && (
 				<div ref={popRef} className="fixed z-50 left-1/2 -translate-x-1/2 mt-2" style={{ top: 96 }}>
-					<div className="bg-white border border-black/10 shadow-2xl p-3" style={{ width: 420 }}>
-						{openPanel === 'Effects' && <ControlsPanel />}
-						{openPanel === 'Text' && <TextControls />}
-						{openPanel === 'Presets' && <PresetsPanel />}
-						{openPanel === 'Co-pilot' && <CopilotPanel />}
-						{openPanel === 'Agents' && <AgentsPanel />}
-						{openPanel === 'Policy' && <PolicyPanel />}
-						{openPanel === 'Settings' && <SettingsPanel />}
-						{openPanel === 'Library' && <LibraryPanel />}
+					<div className="popout-panel" style={{ width: 520 }}>
+						<div className="popout-inner space-y-4">
+							{openPanel === 'Effects' && <ControlsPanel />}
+							{openPanel === 'Text' && <TextControls />}
+							{openPanel === 'Presets' && <PresetsPanel />}
+							{openPanel === 'Co-pilot' && <CopilotPanel />}
+							{openPanel === 'Agents' && <AgentsPanel />}
+							{openPanel === 'Policy' && <PolicyPanel />}
+							{openPanel === 'Settings' && <SettingsPanel />}
+							{openPanel === 'Library' && <LibraryPanel />}
+						</div>
 					</div>
 				</div>
 			)}

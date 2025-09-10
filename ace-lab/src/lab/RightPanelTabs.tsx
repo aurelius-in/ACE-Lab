@@ -28,7 +28,7 @@ export default function RightPanelTabs(){
 				<div className="space-y-3">
 					<label className="block text-sm">
 						<span className="text-white/70">Effect</span>
-						<select value={effectId} onChange={(e)=>setEffectId(e.target.value)} className="mt-1 w-full rounded-xl bg-black/30 border border-white/10 px-2 py-1">
+						<select value={effectId} onChange={(e)=>setEffectId(e.target.value)} className="mt-1 w-full rounded-xl bg-white border border-black/10 px-2 py-1 text-black">
 							<option value="halftone">Halftone</option>
 							<option value="crosszoom">Cross-zoom</option>
 							<option value="vhs">VHS</option>

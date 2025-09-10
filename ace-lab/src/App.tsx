@@ -1,6 +1,7 @@
 import './index.css'
 import './styles.css'
 import AppShell, { type TabKey } from './app/AppShell'
+import { useState as useReactState } from 'react'
 import CanvasHost from './lab/CanvasHost'
 import RightPanelTabs from './lab/RightPanelTabs'
 import TimelinePanel from './lab/TimelinePanel'
@@ -90,6 +91,8 @@ function App() {
 		return () => window.removeEventListener('keydown', onKey);
 	}, [play.t, togglePlay, setPlayhead, buildPack])
 
+	const [enhanced, setEnhanced] = useReactState(false)
+
 	return (
 		<AppShell
 			rightSlot={tab==='Library' ? <LibraryPanel/> : <></>}
@@ -100,17 +103,22 @@ function App() {
 			onTabChange={setTab}
 			device={device}
 			onDeviceChange={setDevice}
+			onEnhance={() => {
+				setEnhanced(v=>!v);
+				const s = useLabStore.getState();
+				const p = { ...s.effect.params } as any;
+				p.contrast = (p.contrast ?? 1) * (s.device==='mobile' ? 1.08 : 1.12);
+				p.bloomStrength = Math.min(0.5, (p.bloomStrength ?? 0.25) + 0.08);
+				p.lutAmount = Math.min(0.4, (p.lutAmount ?? 0.2) + 0.08);
+				p.grainAmount = Math.max(0.02, Math.min(0.08, (p.grainAmount ?? 0.05) * 0.9));
+				useLabStore.setState({ effect: { ...s.effect, params: p } });
+			}}
 		>
 			{tab === 'Lab' && (
 				<>
-					<div className="aspect-video w-full grid place-items-center rounded-2xl border border-white/10 overflow-hidden">
+					<div className="aspect-video w-full grid place-items-center overflow-hidden">
 						<CanvasHost />
 					</div>
-					<div className="flex justify-end mt-3">
-						<button className="btn-primary" onClick={() => runAgent('TransitionAgent')}>Auto-compose</button>
-						<button className="btn-primary ml-2" onClick={handleExportGif}>Export GIF</button>
-					</div>
-					<TimelinePanel />
 				</>
 			)}
 			{tab === 'Agents' && (

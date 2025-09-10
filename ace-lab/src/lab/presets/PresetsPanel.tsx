@@ -80,12 +80,12 @@ export default function PresetsPanel(){
 		showToast?.('Mobile-safe applied');
 	}
 	return (
-		<div className="space-y-4 animate-fade-in animate-slide-up">
+		<div className="space-y-4 bg-white text-black rounded-lg p-3">
 			<div>
-				<h3 className="text-sm text-white/70 mb-2">Built-in</h3>
+				<h3 className="text-sm text-black/70 mb-2">Built-in</h3>
 				{Object.entries(grouped).map(([cat, items]) => (
 					<div key={cat} className="mb-2">
-						<div className="text-xs text-white/60 mb-1">{cat}</div>
+						<div className="text-xs text-black/60 mb-1">{cat}</div>
 						<div className="flex flex-wrap gap-2">
 							{items.map(p => (
 								<button key={p.id} onClick={() => {
@@ -94,40 +94,40 @@ export default function PresetsPanel(){
 									else if (p.id.startsWith('builtin-vhs')) setEffectId('vhs');
 									else if (p.id.startsWith('builtin-textwave')) { toggleText(true); Object.entries(p.params).forEach(([k,v]) => setTextParam(k as any, v as number)); return; }
 									apply({ id: p.id, name: p.name, params: p.params });
-								}} className="px-3 py-1 rounded-full border border-white/10 ace-gradient-text">
-									{p.name}
+								}} className="btn-compact">
+								{p.name}
 								</button>
 							))}
 						</div>
 					</div>
 				))}
 				{Object.keys(grouped).length===0 && (
-					<div className="text-white/60 text-sm">Loading built-in presets…</div>
+					<div className="text-black/60 text-sm">Loading built-in presets…</div>
 				)}
 			</div>
 			<div>
 				<div className="flex items-center justify-between mb-2">
-					<h3 className="text-sm text-white/70">Your Presets</h3>
+					<h3 className="text-sm text-black/70">Your Presets</h3>
 					<div className="flex gap-2 items-center">
-						<label className="text-xs text-white/70 flex items-center gap-1"><input type="checkbox" checked={useServer} onChange={(e)=>{ setUseServer(e.target.checked); if (e.target.checked) refreshFromServer(); }} /> server</label>
-						<button className="btn-primary" onClick={applyMobileSafe}>Apply Mobile-safe</button>
-						<button className="btn-primary" onClick={onExport}>Export</button>
-						<button className="btn-primary" onClick={()=>fileRef.current?.click()}>Import</button>
+						<label className="text-xs text-black/70 flex items-center gap-1"><input type="checkbox" checked={useServer} onChange={(e)=>{ setUseServer(e.target.checked); if (e.target.checked) refreshFromServer(); }} /> server</label>
+						<button className="btn-compact" onClick={applyMobileSafe}>Apply Mobile-safe</button>
+						<button className="btn-compact" onClick={onExport}>Export</button>
+						<button className="btn-compact" onClick={()=>fileRef.current?.click()}>Import</button>
 						<input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={onImport} />
 					</div>
 				</div>
 				<div className="flex gap-2 items-center mb-3">
-					<input value={newName} onChange={(e)=>setNewName(e.target.value)} placeholder="Preset name" className="rounded-xl bg-black/30 border border-white/10 p-2 text-sm" />
-					<button className="btn-primary" onClick={saveCurrent}>Save as preset</button>
+					<input value={newName} onChange={(e)=>setNewName(e.target.value)} placeholder="Preset name" className="rounded-xl bg-white border border-black/10 p-2 text-sm text-black" />
+					<button className="btn-compact" onClick={saveCurrent}>Save as preset</button>
 				</div>
 				{presets.length === 0 ? (
-					<div className="text-white/60 text-sm animate-fade-in">No presets yet. Tweak controls and click “Save as preset”.</div>
+					<div className="text-black/60 text-sm animate-fade-in">No presets yet. Tweak controls and click “Save as preset”.</div>
 				) : (
 					<div className="flex flex-wrap gap-2">
 						{presets.map(p => (
-							<button key={p.id} onClick={() => apply(p)} className="px-2 py-2 rounded-xl border border-white/10 bg-black/30 hover:bg-black/40 flex items-center gap-2 animate-fade-in">
-								{p.thumb ? <img src={p.thumb} alt="thumb" className="w-8 h-8 object-cover rounded" /> : <span className="w-8 h-8 rounded bg-white/10" />}
-								<span className="ace-gradient-text text-sm">{p.name}</span>
+							<button key={p.id} onClick={() => apply(p)} className="btn-compact flex items-center gap-2">
+								{p.thumb ? <img src={p.thumb} alt="thumb" className="w-8 h-8 object-cover rounded" /> : <span className="w-8 h-8 rounded bg-black/5" />}
+								<span className="text-white">{p.name}</span>
 							</button>
 						))}
 					</div>

@@ -2,7 +2,111 @@
 
 <p align="center"><img src="../ace-lab.gif" width="30%" alt="ACE Lab logo"></p>
 
-Agentic Creative Experience Lab scaffolded with Vite + React + TypeScript and Tailwind CSS. Brand styles use the ACE gradient and dark UI.
+Agentic Creative Experience Lab for rapid visual look‑development. Real‑time WebGL canvas with agent assist, presets, policy checks, and export.
+
+<p align="center">
+  <img src="../ace-lab-readme.gif" alt="ACE Lab demo – interactions, menus, and VHS conversion" style="max-width:100%; height:auto;" />
+  <br/>
+  <em>Interactive tour: menus, canvas edits, and converting a clip to VHS quality</em>
+</p>
+
+## Tech stack
+
+- **Vite + React + TypeScript**: fast HMR and typed UI.
+- **Zustand**: lightweight state store (`src/store/useLabStore.ts`).
+- **WebGL2 + GLSL shaders**: halftone, cross‑zoom, VHS, bloom/post.
+- **Tiny‑SDF**: crisp text rendering on the canvas.
+- **OPA (policy)**: in‑browser WASM when available, server fallback.
+- **Express server**: simple preset/token endpoints (`server/`).
+- **Playwright**: basic e2e.
+
+## App tour
+
+- **Header**
+  - **Device**: Desktop/Mobile preview toggle (affects policy/export hints).
+  - **Enhance**: one‑click quality boost (see “Enhance” below).
+  - **Tabs**: Effects, Text, Presets, Co‑pilot, Agents, Policy, Settings, Library.
+  - **Export / Record**: WebM export with bitrate and quick 3s/6s record.
+
+- **Main panel (left)**
+  - Real‑time canvas (`CanvasHost`) with the active effect pipeline.
+  - Timeline readout and keyframe mixing when Cross‑zoom is active.
+
+- **Right panel (Library)**
+  - Shows whether Image A/B are loaded and lets you clear them.
+
+## Media
+
+- Load a primary still/video; optional secondary enables cross‑zoom.
+- Supported: common image formats (png, jpg, webp) and video (mp4/webm).
+
+## Effects pipeline (what each control does)
+
+- **Halftone** (default)
+  - `dotScale`: controls dot size.
+  - `angleRad`: screen angle in radians.
+  - `contrast`: contrast curve multiplier.
+  - `invert01`: invert toggle (0/1).
+
+- **Cross‑zoom** (when secondary media is set)
+  - `zoomStrength`: zoom intensity during transition.
+  - `samples`: quality/perf tradeoff (auto‑reduced by PerfAgent on low fps).
+  - Uses timeline keyframes to blend from A→B over t ∈ [0..1].
+
+- **VHS**
+  - `aberration`, `noise`, `scanline`, `vignette` for retro look.
+
+- **Post / Global** (applies to all effects)
+  - `bloomStrength`, `bloomThreshold`: glow amount and threshold.
+  - `lutAmount`: strength of LUT toning if a LUT is loaded.
+  - `grainAmount`: film grain.
+  - `vignette01`: vignette strength.
+
+- **Text overlay**
+  - Enable in Text tab; rendered with SDF on the canvas.
+  - `amp` (wiggle), `freq`, `speed`, `outlinePx`.
+
+## Popout panels (what they’re for)
+
+- **Effects**: switches between Halftone/Cross‑zoom/VHS and exposes sliders above.
+- **Text**: toggles SDF text and its animation/outline.
+- **Presets**: Save current look, import/export JSON, apply saved styles.
+- **Co‑pilot**: lightweight assistant panel UI.
+- **Agents**: run agents (see below) and inspect logs/traces.
+- **Policy**: evaluate export policy; shows violations and one‑click fix.
+- **Settings**: export bitrate, timeline snap granularity.
+- **Library**: status and clear actions for Image A/B, and style‑pack import/export.
+
+## Enhance button (what it does and why)
+
+- One‑click boost intended to improve perceived quality of the current photo/video without changing the creative intent.
+- Under the hood it increases `contrast`, slightly raises `bloomStrength` and `lutAmount`, and gently reduces `grainAmount`. On Mobile the contrast bump is smaller to avoid clipping.
+- It’s a toggle (press again to revert via manual sliders or another preset).
+
+## Agents (what/why)
+
+- **TransitionAgent**: inserts 3 keyframes for a simple Cross‑zoom.
+- **PresetAgent**: proposes two starter presets after some edits.
+- **PerfAgent**: reduces samples to maintain smooth fps on mobile.
+- **BriefAgent**: applies parameters derived from a short style brief.
+- **PolicyAgent**: enforces export constraints (e.g., 1080p on mobile).
+- **ArchitectAgent**: suggests tasteful post params and saves as preset.
+- **QAAgent**: measures fps for quick quality assurance.
+
+## Keyboard shortcuts
+
+- Space: Play/Pause
+- Left/Right: Scrub timeline
+- R: Record 3s  •  6: Record 6s
+- E: Export  •  S: Save Style Pack
+- A: Apply ACE Look (pipeline + top preset)
+- ?: Toggle key help
+
+## Use cases
+
+- Rapid look‑development on stills or short clips (mood boards, pitches).
+- Prototyping transitions between two images using Cross‑zoom.
+- Batch exporting short previews for social or internal reviews.
 
 ## Development
 
@@ -13,141 +117,45 @@ npm run dev
 
 ### Backend preset service
 
-Start the simple preset service (CRUD) in another terminal:
+Run in a second terminal from `ace-lab/ace-lab`:
 
 ```
-# from ace-lab/ace-lab
 npm run server
 ```
 
-Windows-friendly dev alias:
+Windows‑friendly alias (sets PORT and runs in foreground):
 
 ```
-# sets PORT then runs in foreground
 npm run dev:server
 ```
 
-## Quick usage
+## Exporting
 
-- Load Image A (and optionally Image B) in Effects tab.
-- Adjust Halftone sliders; add Text in Text tab.
-- Play the timeline; use Auto-compose to insert keyframes.
-- Use device toggle (Desktop/Mobile). Export applies 1080p on Mobile.
+- WebM export (bitrate from Settings). Optional GIF export (via command in the Lab tab).
+- Policy checks run before export with auto‑fix suggestions (e.g., width for mobile).
 
-### Keyboard shortcuts
+## Project map
 
-- Space: Play/Pause
-- Left/Right: Scrub timeline
-- R: Record 3s  •  6: Record 6s
-- E: Export  •  S: Save Style Pack
-- A: Apply ACE Look (pipeline + top preset)
+- `src/lab/CanvasHost.tsx`: WebGL renderer and shader pipeline.
+- `src/store/useLabStore.ts`: global state, actions, agents.
+- `src/shaders/*`: fragment shaders for blocks and post.
+- `src/utils/media.ts`: capture/export helpers.
+- `server/`: minimal Express service and tests.
 
-## What’s new (succinct)
+## Additional capabilities
 
-- Agents & Policy panels: run agents with a live log; run policy checks and one-click Fix.
-- Settings tab: export bitrate slider and timeline snap-step control.
-- Export polish: progress HUD with Abort; bitrate applied to MediaRecorder.
-- Presets: Export/Import JSON, Save current as preset, optional server sync toggle.
-- Timeline: labeled grid, configurable snapping (Shift finer, Alt coarser) with live percent.
-- Effects: VHS block selectable; LUT support (.cube/.png); SDF text rendering.
+- Drag‑drop media loading with instant thumbnails.
+- Curated LUT gallery with mobile‑tuned performance.
+- Full undo/redo for parameter edits and snapshot compare.
+- Audio import for videos and synchronized A/V export.
+- Multi‑clip timeline with additional transitions beyond Cross‑zoom.
+- Comprehensive accessibility support and full keyboard control of sliders.
+- Expanded built‑in preset packs with thumbnail previews.
 
-## Improvements backlog
+## Policy WASM build (optional)
 
-- Architect flow
-  - Blend suggested params directly post-pipeline and save as preset
-  - Visual indicators for applied suggestions
-- Presets
-  - Expanded built-ins across Print, Mobile, Cinematic, Monochrome, VHS, Text
-  - Server sync: login + bearer token; thumbs captured from canvas
-- Policy parity
-  - WASM OPA when available; server-side fallback otherwise
-  - UI surfacing of violations and one-click fix
-- CI
-  - Lint + build + server tests + e2e (Playwright) on PRs
-  - Preview artifact of dist/
-
-## Acceptance checks (this iteration)
-
-- Load photo, apply Halftone, Record 3s → downloads WebM
-- Transition with two images, keyframes render and play
-- BriefAgent with prompt “warm retro print, soft grain” updates look
-- PerfAgent on cross-zoom reduces samples when needed
-- PolicyAgent blocks 4K on Mobile and fixes to 1080p
-- After 10 edits, PresetAgent suggests ≥2 presets
-
-### Policy WASM build
-
-Compile Rego to WASM (requires OPA CLI) and place it in `public/policy/policy.wasm`:
+Compile Rego to WASM (requires OPA CLI) and place it at `public/policy/policy.wasm`:
 
 ```
 opa build -t wasm -e ace/policy/allow -o public/policy/policy.wasm src/policy/rules.rego
-```
-
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
