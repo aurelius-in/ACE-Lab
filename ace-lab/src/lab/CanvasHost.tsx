@@ -36,7 +36,20 @@ export default function CanvasHost() {
 		const compile = (g: WebGL2RenderingContext, type: number, src: string) => { const sh = g.createShader(type)!; g.shaderSource(sh, src); g.compileShader(sh); if (!g.getShaderParameter(sh, g.COMPILE_STATUS)) { console.error(g.getShaderInfoLog(sh)); } return sh; };
 		const program = (g: WebGL2RenderingContext, fsSrc: string) => { const vs = compile(g, g.VERTEX_SHADER, VERT_SRC as string); const fs = compile(g, g.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${fsSrc}`); const p = g.createProgram()!; g.attachShader(p, vs); g.attachShader(p, fs); g.linkProgram(p); return p; };
 
-		const baseProg = program(gl, (effect.id === 'crosszoom' && !!media.secondary) ? CROSS_SRC : (effect.id === 'vhs' ? VHS_SRC : HALFTONE_SRC));
+		// Until media is loaded, show a simple white surface or intro videos instead of the default vignette/halftone
+		const noMedia = !media.primary && !media.secondary;
+		const normalProg = program(gl, (effect.id === 'crosszoom' && !!media.secondary) ? CROSS_SRC : (effect.id === 'vhs' ? VHS_SRC : HALFTONE_SRC));
+		const whiteProg = program(gl, `
+			out vec4 fragColor;
+			uniform vec2 uRes; uniform float uTime; uniform float uMix;
+			void main(){ fragColor = vec4(1.0,1.0,1.0,1.0); }
+		`);
+		const blitProg = program(gl, `
+			out vec4 fragColor;
+			uniform sampler2D uTex0; uniform vec2 uRes;
+			void main(){ vec2 uv = gl_FragCoord.xy / uRes; fragColor = texture(uTex0, uv); }
+		`);
+		const baseProg = noMedia ? whiteProg : normalProg;
 		const textProg = program(gl, TEXT_SDF_SRC);
 		const blurProg = program(gl, BLUR_SRC);
 		const postProg = program(gl, POST_SRC);
@@ -48,6 +61,7 @@ export default function CanvasHost() {
 
 		const makeTex = (g: WebGL2RenderingContext) => { const t = g.createTexture()!; g.bindTexture(g.TEXTURE_2D, t); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, g.LINEAR); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.LINEAR); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE); return t; };
 		const tex0 = makeTex(gl); const tex1 = makeTex(gl); const textTex = makeTex(gl);
+		const texIntro = makeTex(gl);
 		const uploadImage = (g: WebGL2RenderingContext, url: string, to: WebGLTexture) => { const i=new Image(); i.crossOrigin='anonymous'; i.onload=()=>{ g.bindTexture(g.TEXTURE_2D,to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,i); }; i.src=url; };
 		const uploadVideo = (g: WebGL2RenderingContext, url: string, to: WebGLTexture) => {
 			const v = document.createElement('video');
@@ -59,8 +73,22 @@ export default function CanvasHost() {
 			const update = () => { if (v.readyState >= 2) { g.bindTexture(g.TEXTURE_2D, to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,v); } requestAnimationFrame(update); };
 			update();
 		};
-		if (media.primary) { if (media.primary.kind==='video') uploadVideo(gl, media.primary.src, tex0); else uploadImage(gl, media.primary.src, tex0); } else { uploadImage(gl, '/ace-lab.webp', tex0); }
+		if (media.primary) { if (media.primary.kind==='video') uploadVideo(gl, media.primary.src, tex0); else uploadImage(gl, media.primary.src, tex0); } else { uploadImage(gl, '/white.png', texIntro); }
 		if (media.secondary) { if (media.secondary.kind==='video') uploadVideo(gl, media.secondary.src, tex1); else uploadImage(gl, media.secondary.src, tex1); }
+
+		// Intro videos setup (only used when no media loaded)
+		const introVhs = document.createElement('video');
+		introVhs.src = '/head_loop_vhs.mp4'; introVhs.muted = true; (introVhs as any).playsInline = true; introVhs.loop = true; introVhs.autoplay = true; introVhs.preload = 'auto'; introVhs.crossOrigin = 'anonymous';
+		const introHead = document.createElement('video');
+		introHead.src = '/head_loop.mp4'; introHead.muted = true; (introHead as any).playsInline = true; introHead.loop = true; introHead.autoplay = true; introHead.preload = 'auto'; introHead.crossOrigin = 'anonymous';
+		function startIntro(){ introVhs.play().catch(()=>{}); introHead.play().catch(()=>{}); }
+		introVhs.addEventListener('canplay', ()=> introVhs.play().catch(()=>{}));
+		introHead.addEventListener('canplay', ()=> introHead.play().catch(()=>{}));
+		document.addEventListener('click', startIntro, { once: true });
+		let introStart = 0;
+		let splashHidden = false;
+		const onSplashHidden = () => { introStart = performance.now(); splashHidden = true; };
+		window.addEventListener('ace:splash-hidden', onSplashHidden, { once: true } as any);
 
 		// Generate SDF atlas for the whole text string using tiny-sdf (with simple cache)
 		const glyphCache = new Map<string, HTMLCanvasElement>();
@@ -109,7 +137,7 @@ export default function CanvasHost() {
 
 		// LUT upload (optional)
 		let lutTex: WebGLTexture | undefined; const st = useLabStore.getState();
-		if ((st.assets?.lutSrc)) { lutTex = makeTex(gl); upload(gl, st.assets!.lutSrc!, lutTex); }
+		if ((st.assets?.lutSrc)) { lutTex = makeTex(gl); uploadImage(gl, st.assets!.lutSrc!, lutTex); }
 
 		const loop = () => {
 			if (!running) { raf = requestAnimationFrame(loop); return; }
@@ -120,14 +148,35 @@ export default function CanvasHost() {
 
 			// base to rtTex
 			gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, rtTex, 0);
-			gl.useProgram(baseProg);
-			gl.uniform2f(gl.getUniformLocation(baseProg, 'uRes'), c.width, c.height);
-			gl.uniform1f(gl.getUniformLocation(baseProg, 'uTime'), now/1000);
-			gl.uniform1f(gl.getUniformLocation(baseProg, 'uMix'), mix);
-			gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex0); const loc0 = gl.getUniformLocation(baseProg,'uTex0'); if(loc0) gl.uniform1i(loc0,0);
-			if (wantCrossNow){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex1); const loc1 = gl.getUniformLocation(baseProg,'uTex1'); if(loc1) gl.uniform1i(loc1,1); }
-			const p = effect.params as any; let zoomStrength = p.zoomStrength ?? 0.8; let samples = Math.max(1, Math.min(32, Math.floor(p.samples ?? 16))); if (fps < 30 && wantCrossNow) { if (samples > 8) { samples = 8; if (!tip) { setTip('Performance: reduced samples to keep 30fps'); setTimeout(()=>setTip(null), 2000); } } } const locP = gl.getUniformLocation(baseProg,'uParams'); if(locP) gl.uniform4f(locP, p.dotScale ?? zoomStrength, p.angleRad ?? samples, p.contrast ?? 1, p.invert01 ?? 0);
-			gl.drawArrays(gl.TRIANGLES, 0, 3);
+			if (noMedia) {
+				// choose phase every 5s AFTER splash hides: 0 white, 1 head, 2 vhs
+				const elapsed = splashHidden ? (now - introStart) / 1000 : 0;
+				const phase = splashHidden ? (Math.floor(elapsed / 5) % 3) : 0;
+				if (phase === 0) {
+					gl.useProgram(blitProg);
+					gl.uniform2f(gl.getUniformLocation(blitProg, 'uRes'), c.width, c.height);
+					gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texIntro); const tb = gl.getUniformLocation(blitProg,'uTex0'); if (tb) gl.uniform1i(tb,0);
+					gl.drawArrays(gl.TRIANGLES, 0, 3);
+				} else {
+					const vtex = phase === 1 ? tex0 : tex1;
+					// ensure correct video bound: upload intro videos to tex0 (head) / tex1 (vhs)
+					if (phase === 1 && introHead.readyState >= 2) { gl.bindTexture(gl.TEXTURE_2D, tex0); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,introHead); }
+					if (phase === 2 && introVhs.readyState >= 2) { gl.bindTexture(gl.TEXTURE_2D, tex1); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,introVhs); }
+					gl.useProgram(blitProg);
+					gl.uniform2f(gl.getUniformLocation(blitProg, 'uRes'), c.width, c.height);
+					gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, vtex); const b0 = gl.getUniformLocation(blitProg,'uTex0'); if (b0) gl.uniform1i(b0,0);
+					gl.drawArrays(gl.TRIANGLES, 0, 3);
+				}
+			} else {
+				gl.useProgram(baseProg);
+				gl.uniform2f(gl.getUniformLocation(baseProg, 'uRes'), c.width, c.height);
+				gl.uniform1f(gl.getUniformLocation(baseProg, 'uTime'), now/1000);
+				gl.uniform1f(gl.getUniformLocation(baseProg, 'uMix'), mix);
+				gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex0); const loc0 = gl.getUniformLocation(baseProg,'uTex0'); if(loc0) gl.uniform1i(loc0,0);
+				if (wantCrossNow){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex1); const loc1 = gl.getUniformLocation(baseProg,'uTex1'); if(loc1) gl.uniform1i(loc1,1); }
+				const p = effect.params as any; let zoomStrength = p.zoomStrength ?? 0.8; let samples = Math.max(1, Math.min(32, Math.floor(p.samples ?? 16))); if (fps < 30 && wantCrossNow) { if (samples > 8) { samples = 8; if (!tip) { setTip('Performance: reduced samples to keep 30fps'); setTimeout(()=>setTip(null), 2000); } } } const locP = gl.getUniformLocation(baseProg,'uParams'); if(locP) gl.uniform4f(locP, p.dotScale ?? zoomStrength, p.angleRad ?? samples, p.contrast ?? 1, p.invert01 ?? 0);
+				gl.drawArrays(gl.TRIANGLES, 0, 3);
+			}
 
 			// blur ping
 			gl.bindFramebuffer(gl.FRAMEBUFFER, fbo2); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ping, 0);
@@ -162,7 +211,7 @@ export default function CanvasHost() {
 
 		function vis(){ running = document.visibilityState === 'visible'; }
 		document.addEventListener('visibilitychange', vis);
-		return () => { cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', vis); };
+		return () => { cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', vis); window.removeEventListener('ace:splash-hidden', onSplashHidden as any); };
 	}, [media.primary?.src, media.secondary?.src, effect.id, effect.params, publishFps, timeline.keyframes, fps, text.enabled, text.value, text.params, play.playing, play.t, setPlayhead]);
 
 	return (

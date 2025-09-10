@@ -54,6 +54,22 @@ h1, h2, h3, h4 { font-family: Poppins, Inter, system-ui, Avenir, Helvetica, Aria
 .btn-chip:hover { box-shadow: 0 6px 14px rgba(168,60,240,.22); }
 .btn-chip:focus { outline: 2px solid rgba(255,75,181,.5); outline-offset: 2px; }
 
+/* Compact primary for popouts */
+.btn-compact {
+	position: relative;
+	border-radius: 0.75rem;
+	padding: 0.28rem 0.5rem;
+	font-weight: 600;
+	font-size: 0.85rem;
+	border: 1px solid rgba(0,0,0,.08);
+	background: var(--g-ace);
+	color: var(--white);
+}
+
+/* Hard-enforced white popout surface and inner padding */
+.popout-panel { background: #ffffff !important; color: #000 !important; border: 1px solid rgba(0,0,0,.2) !important; border-radius: 12px !important; box-shadow: 0 16px 36px rgba(0,0,0,.2) !important; }
+.popout-inner { padding: 20px !important; }
+
 /* Gradient select to match brand */
 .select-gradient {
 	apearance: none;

@@ -50,12 +50,12 @@ const hideSplash = () => {
   if (!s) return;
   s.style.transition = 'opacity 300ms ease';
   s.style.opacity = '0';
-  setTimeout(() => s?.parentElement?.removeChild(s), 320);
+  setTimeout(() => { s?.parentElement?.removeChild(s); window.dispatchEvent(new Event('ace:splash-hidden')); }, 320);
 };
 
-const startSplashTimer = () => setTimeout(hideSplash, 4900);
+function scheduleSplashHide(){ setTimeout(hideSplash, 4900); }
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  startSplashTimer();
+  scheduleSplashHide();
 } else {
-  window.addEventListener('DOMContentLoaded', startSplashTimer, { once: true });
+  window.addEventListener('DOMContentLoaded', scheduleSplashHide, { once: true });
 }

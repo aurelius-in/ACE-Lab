@@ -15,18 +15,18 @@ export default function CopilotPanel(){
 		await applyAceLook();
 	}
 	return (
-		<div className="space-y-3">
+		<div className="space-y-3 bg-white text-black rounded-lg p-3">
 			<div>
-				<label className="block text-sm text-white/70">Brief prompt</label>
-				<textarea value={brief} onChange={(e)=>setBrief(e.target.value)} className="w-full rounded-xl bg-black/30 border border-white/10 p-2" rows={3} />
-				<div className="flex justify-end mt-2 gap-2"><button className="btn-primary" onClick={()=>runAgent('BriefAgent')}>Apply Look Profile</button><button className="btn-primary" onClick={runPipeline}>Run Pipeline</button><button className="btn-primary" onClick={applyAceLook}>Apply ACE Look</button></div>
+				<label className="block text-sm text-black/70">Brief prompt</label>
+				<textarea value={brief} onChange={(e)=>setBrief(e.target.value)} className="w-full rounded-xl bg-white border border-black/10 p-2 text-black" rows={3} />
+				<div className="flex justify-end mt-2 gap-2"><button className="btn-compact" onClick={()=>runAgent('BriefAgent')}>Apply Look Profile</button><button className="btn-compact" onClick={runPipeline}>Run Pipeline</button><button className="btn-compact" onClick={applyAceLook}>Apply ACE Look</button></div>
 			</div>
 			<div className="space-y-2">
-				<button className="btn-primary w-full" onClick={()=>runAgent('PerfAgent')}>Apply Mobile Safe</button>
-				<button className="btn-primary w-full" onClick={()=>runAgent('TransitionAgent')}>Insert Keyframes</button>
-				<button className="btn-primary w-full" onClick={()=>runAgent('PolicyAgent')}>Fix Violations {device==='mobile' ? '(1080p)' : ''}</button>
-				<button className="btn-primary w-full" onClick={()=>runAgent('QAAgent')}>QA Sweep</button>
-				{qa && <div className="text-xs text-white/70">QA: ~{qa.fps} fps</div>}
+				<button className="btn-compact w-full" onClick={()=>runAgent('PerfAgent')}>Apply Mobile Safe</button>
+				<button className="btn-compact w-full" onClick={()=>runAgent('TransitionAgent')}>Insert Keyframes</button>
+				<button className="btn-compact w-full" onClick={()=>runAgent('PolicyAgent')}>Fix Violations {device==='mobile' ? '(1080p)' : ''}</button>
+				<button className="btn-compact w-full" onClick={()=>runAgent('QAAgent')}>QA Sweep</button>
+				{qa && <div className="text-xs text-black/70">QA: ~{qa.fps} fps</div>}
 			</div>
 		</div>
 	);
