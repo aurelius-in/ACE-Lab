@@ -15,10 +15,10 @@
 html, body, #root { height: 100%; }
 body {
 	margin: 0;
-	background: var(--ink-950);
-	color: var(--ink-100);
+	background: #FFFFFF;
+	color: #11131A;
 	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-	background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="OP"/></svg>'.replace('OP', getComputedStyle(document.documentElement).getPropertyValue('--noise-opacity').trim() || '0.02'));
+	background-image: none;
 }
 
 h1, h2, h3, h4 { font-family: Poppins, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; letter-spacing: -0.01em; }
@@ -39,7 +39,69 @@ h1, h2, h3, h4 { font-family: Poppins, Inter, system-ui, Avenir, Helvetica, Aria
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(168,60,240,.25); }
 .btn-primary:focus { outline: 2px solid rgba(255,75,181,.6); outline-offset: 2px; }
 
-.card-dark { background: var(--ink-900); border: 1px solid rgba(255,255,255,.06); border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+/* Compact gradient button for tabs/chips */
+.btn-chip {
+	position: relative;
+	border-radius: 1rem;
+	padding: 0.35rem 0.6rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	border: 1px solid rgba(0,0,0,.08);
+	background: var(--g-ace);
+	color: var(--white);
+	box-shadow: 0 4px 10px rgba(0,0,0,.1);
+}
+.btn-chip:hover { box-shadow: 0 6px 14px rgba(168,60,240,.22); }
+.btn-chip:focus { outline: 2px solid rgba(255,75,181,.5); outline-offset: 2px; }
+
+/* Gradient select to match brand */
+.select-gradient {
+	apearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	background: var(--g-ace);
+	color: var(--white);
+	border: 1px solid rgba(0,0,0,.08);
+	border-radius: 0.75rem;
+	padding: 0.5rem 1rem;
+	font-weight: 600;
+}
+
+/* Rectangular strip buttons (no gaps when grouped) */
+.strip-group { display: flex; gap: 0; align-items: center; }
+.strip-vertical { display: flex; flex-direction: column; gap: 0; }
+.btn-strip {
+	border-radius: 0;
+	height: 36px;
+	padding: 0 0.75rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 700;
+	background: var(--g-ace);
+	color: var(--white);
+	border: 1px solid rgba(0,0,0,.08);
+}
+.strip-group .btn-strip + .btn-strip { margin-left: -1px; }
+.strip-vertical .btn-strip + .btn-strip { margin-top: -1px; }
+.btn-strip-inverse {
+	border-radius: 0;
+	height: 36px;
+	padding: 0 0.75rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 700;
+	background: #ffffff;
+	color: #11131A;
+	border: 1px solid rgba(0,0,0,.2);
+}
+
+/* Smaller strip variant for device buttons */
+.btn-strip-sm { border-radius: 0; height: 28px; padding: 0 0.6rem; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; background: var(--g-ace); color: var(--white); border: 1px solid rgba(0,0,0,.08); }
+.btn-strip-sm-inverse { border-radius: 0; height: 28px; padding: 0 0.6rem; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; background: #ffffff; color: #11131A; border: 1px solid rgba(0,0,0,.2); }
+
+.card-dark { background: #FFFFFF; border: 1px solid rgba(0,0,0,.08); border-radius: 1.25rem; box-shadow: 0 8px 20px rgba(0,0,0,.08); }
 
 /* Slider aesthetic to match brand */
 input[type="range"] {

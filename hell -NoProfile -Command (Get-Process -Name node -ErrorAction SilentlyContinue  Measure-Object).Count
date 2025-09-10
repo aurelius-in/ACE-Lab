@@ -1,0 +1,85 @@
+[1mdiff --git a/ace-lab/README.md b/ace-lab/README.md[m
+[1mindex c178032..e7b72a7 100644[m
+[1m--- a/ace-lab/README.md[m
+[1m+++ b/ace-lab/README.md[m
+[36m@@ -51,6 +51,21 @@[m [mnpm run dev:server[m
+ - Timeline: labeled grid, configurable snapping (Shift finer, Alt coarser) with live percent.[m
+ - Effects: VHS block selectable; LUT support (.cube/.png); SDF text rendering.[m
+ [m
+[32m+[m[32m## Improvements backlog[m
+[32m+[m
+[32m+[m[32m- Architect flow[m
+[32m+[m[32m  - Blend suggested params directly post-pipeline and save as preset[m
+[32m+[m[32m  - Visual indicators for applied suggestions[m
+[32m+[m[32m- Presets[m
+[32m+[m[32m  - Expanded built-ins across Print, Mobile, Cinematic, Monochrome, VHS, Text[m
+[32m+[m[32m  - Server sync: login + bearer token; thumbs captured from canvas[m
+[32m+[m[32m- Policy parity[m
+[32m+[m[32m  - WASM OPA when available; server-side fallback otherwise[m
+[32m+[m[32m  - UI surfacing of violations and one-click fix[m
+[32m+[m[32m- CI[m
+[32m+[m[32m  - Lint + build + server tests + e2e (Playwright) on PRs[m
+[32m+[m[32m  - Preview artifact of dist/[m
+[32m+[m
+ ## Acceptance checks (this iteration)[m
+ [m
+ - Load photo, apply Halftone, Record 3s → downloads WebM[m
+[1mdiff --git a/ace-lab/src/agents/pipeline.ts b/ace-lab/src/agents/pipeline.ts[m
+[1mindex 7cf879b..05b1830 100644[m
+[1m--- a/ace-lab/src/agents/pipeline.ts[m
+[1m+++ b/ace-lab/src/agents/pipeline.ts[m
+[36m@@ -9,6 +9,11 @@[m [mexport async function runPipeline() {[m
+ 	await runAgent('TransitionAgent');[m
+ 	await runAgent('PerfAgent');[m
+ 	await runAgent('PolicyAgent');[m
+[32m+[m	[32m// Apply architect suggestions directly to current effect as final touch[m
+[32m+[m	[32mconst s = useLabStore.getState();[m
+[32m+[m	[32mconst suggested = { bloomThreshold: 0.62, grainAmount: 0.045, lutAmount: 0.23 } as Record<string, number>;[m
+[32m+[m	[32ms.setEffectId(s.effect.id);[m
+[32m+[m	[32ms.applyPreset({ id: 'ai-architect-final', name: 'Architect Final Touch', params: suggested });[m
+ }[m
+ [m
+ export async function applyAceLook(){[m
+[1mdiff --git a/ace-lab/src/lab/presets/builtin.json b/ace-lab/src/lab/presets/builtin.json[m
+[1mindex 964f65d..a35e792 100644[m
+[1m--- a/ace-lab/src/lab/presets/builtin.json[m
+[1m+++ b/ace-lab/src/lab/presets/builtin.json[m
+[36m@@ -48,6 +48,26 @@[m
+     "id": "builtin-monochrome-print",[m
+     "name": "Monochrome Print",[m
+     "params": { "dotScale": 10, "angleRad": 0.5, "contrast": 1.15, "invert01": 1 }[m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "builtin-cinematic-crisp",[m
+[32m+[m[32m    "name": "Cinematic Crisp",[m
+[32m+[m[32m    "params": { "bloomStrength": 0.28, "bloomThreshold": 0.68, "grainAmount": 0.02, "lutAmount": 0.18 }[m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "builtin-vhs-warm-noise",[m
+[32m+[m[32m    "name": "VHS Warm Noise",[m
+[32m+[m[32m    "params": { "aberration": 0.5, "noise": 0.3, "scanline": 0.25, "vignette": 0.22 }[m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "builtin-textwave-caption",[m
+[32m+[m[32m    "name": "Textwave Caption",[m
+[32m+[m[32m    "params": { "amp": 6, "freq": 8, "speed": 1.2, "outlinePx": 1 }[m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "builtin-print-zine",[m
+[32m+[m[32m    "name": "Print Zine",[m
+[32m+[m[32m    "params": { "dotScale": 11, "angleRad": 0.6, "contrast": 1.05, "invert01": 0 }[m
+   }[m
+ ][m
+ [m
+[1mdiff --git a/ace-lab/tests/tabs.spec.ts b/ace-lab/tests/tabs.spec.ts[m
+[1mindex 09d26fa..e39ca43 100644[m
+[1m--- a/ace-lab/tests/tabs.spec.ts[m
+[1m+++ b/ace-lab/tests/tabs.spec.ts[m
+[36m@@ -7,4 +7,7 @@[m [mtest('switch tabs and open keyboard overlay', async ({ page }) => {[m
+ 	await expect(page.getByText('Architect proposals')).toBeVisible();[m
+ 	await page.keyboard.press('h');[m
+ 	await expect(page.getByLabel('Keyboard shortcuts overlay')).toBeVisible();[m
+[32m+[m	[32m// toggle off[m
+[32m+[m	[32mawait page.keyboard.press('h');[m
+[32m+[m	[32mawait expect(page.getByLabel('Keyboard shortcuts overlay')).toHaveCount(0);[m
+ });[m

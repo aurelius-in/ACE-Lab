@@ -1,49 +1,99 @@
-import { type PropsWithChildren } from 'react';
+import { type PropsWithChildren, useEffect, useRef, useState } from 'react';
 import { clsx } from 'clsx';
+import ControlsPanel from '../lab/ControlsPanel';
+import TextControls from '../lab/TextControls';
+import PresetsPanel from '../lab/presets/PresetsPanel';
+import CopilotPanel from '../lab/copilot/CopilotPanel';
+import AgentsPanel from '../lab/copilot/AgentsPanel';
+import PolicyPanel from '../lab/policy/PolicyPanel';
+import SettingsPanel from '../lab/SettingsPanel';
+import LibraryPanel from '../lab/LibraryPanel';
 
-const tabs = ['Lab', 'Agents', 'Library'] as const;
+const tabs = ['Agents', 'Library'] as const;
 export type TabKey = typeof tabs[number];
 
 export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange, device, onDeviceChange }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void, device: 'mobile'|'desktop', onDeviceChange: (d: 'mobile'|'desktop') => void }) {
+	const [openPanel, setOpenPanel] = useState<null | 'Effects' | 'Text' | 'Presets' | 'Co-pilot' | 'Agents' | 'Policy' | 'Settings' | 'Library'>(null);
+	const popRef = useRef<HTMLDivElement | null>(null);
+	useEffect(()=>{
+		function onDown(e: MouseEvent){
+			if (!popRef.current) return;
+			if (!popRef.current.contains(e.target as Node)) setOpenPanel(null);
+		}
+		if (openPanel) { document.addEventListener('mousedown', onDown); }
+		return ()=> document.removeEventListener('mousedown', onDown);
+	}, [openPanel]);
 	return (
-		<div className="min-h-screen text-[var(--ink-100)] bg-[var(--ink-950)]">
+		<div className="min-h-screen text-[var(--ink-900)] bg-white">
 			<header className="sticky top-0 z-10 backdrop-blur-sm">
-				<div className="container mx-auto flex items-center justify-between py-4">
-					<div className="relative flex items-center gap-3">
-						<img src="/ace-icon.gif" alt="ACE icon" className="w-8 h-8 rounded-xl border border-white/10" />
-						<div className="relative">
-							<div className="ace-glow absolute inset-0" />
-							<div className="w-9 h-9 rounded-2xl border border-white/10 grid place-items-center">
-								<BeakerIcon />
-							</div>
+				<div className="container mx-auto flex items-center justify-between" style={{ paddingTop: 12, paddingBottom: 12 }}>
+					<div className="relative flex items-center gap-3" style={{ height: 80 }}>
+						<img src="/ace-lab-min.png" alt="ACE Lab" style={{ height: '100%', width: 'auto', maxHeight: '100%', display: 'block' }} className="select-none" draggable={false} />
+						<div className="strip-vertical ml-16" aria-label="Device">
+							<button className={clsx(device==='desktop' ? 'btn-strip-sm' : 'btn-strip-sm-inverse')} onClick={()=>onDeviceChange('desktop')}>Desktop</button>
+							<button className={clsx(device==='mobile' ? 'btn-strip-sm' : 'btn-strip-sm-inverse')} onClick={()=>onDeviceChange('mobile')}>Mobile</button>
 						</div>
-						<h1 className="text-xl font-bold ace-gradient-text">ACE Lab</h1>
 					</div>
-					<nav className="flex items-center gap-2" role="tablist" aria-label="Main sections">
+					<nav className="strip-group" role="tablist" aria-label="Main sections">
 						{tabs.map(t => (
-							<button key={t} role="tab" aria-selected={activeTab===t} className={clsx('px-3 py-1.5 rounded-2xl border border-white/10 text-sm', activeTab===t ? 'ace-gradient-text' : 'text-white/70 hover:text-white')} onClick={() => onTabChange(t)}>
+							<button key={t} role="tab" aria-selected={activeTab===t} className={clsx('btn-strip', activeTab===t ? '' : '')} onClick={() => {
+								if (t === 'Agents') { setOpenPanel(p=> p==='Agents'? null : 'Agents'); return; }
+								if (t === 'Library') { setOpenPanel(p=> p==='Library'? null : 'Library'); return; }
+								onTabChange(t);
+							}}>
 								{t}
 							</button>
 						))}
+						{(['Effects','Text','Presets','Co-pilot','Agents','Policy','Settings'] as const).map(name => (
+							<button key={name} className="btn-strip" onClick={()=> setOpenPanel(p => p===name ? null : name)}>{name}</button>
+						))}
 					</nav>
-					<div className="flex items-center gap-2">
-						<select aria-label="Device" value={device} onChange={(e)=>onDeviceChange(e.target.value as any)} className="px-2 py-1 rounded-xl bg-black/40 border border-white/10 text-sm">
-							<option value="desktop">Desktop</option>
-							<option value="mobile">Mobile</option>
-						</select>
-						<button className="btn-primary" aria-label="Export video" onClick={onExport}>Export</button>
-						<button className="btn-primary" aria-label="Record three seconds" onClick={onRecord3}>Record 3s</button>
-						<button className="btn-primary" aria-label="Record six seconds" onClick={onRecord6}>Record 6s</button>
+					<div className="strip-group">
+						<button className="btn-strip" aria-label="Export video" onClick={onExport}>Export</button>
+						<RecordControls onRecord3={onRecord3} onRecord6={onRecord6} strip />
 					</div>
 				</div>
 				<div style={{height:1, background: 'linear-gradient(90deg, var(--ace-g1), var(--ace-g3))'}} />
 			</header>
+			{openPanel && (
+				<div ref={popRef} className="fixed z-50 left-1/2 -translate-x-1/2 mt-2" style={{ top: 96 }}>
+					<div className="bg-white border border-black/10 shadow-2xl p-3" style={{ width: 420 }}>
+						{openPanel === 'Effects' && <ControlsPanel />}
+						{openPanel === 'Text' && <TextControls />}
+						{openPanel === 'Presets' && <PresetsPanel />}
+						{openPanel === 'Co-pilot' && <CopilotPanel />}
+						{openPanel === 'Agents' && <AgentsPanel />}
+						{openPanel === 'Policy' && <PolicyPanel />}
+						{openPanel === 'Settings' && <SettingsPanel />}
+						{openPanel === 'Library' && <LibraryPanel />}
+					</div>
+				</div>
+			)}
 			<main className="container mx-auto py-6 grid grid-cols-1 lg:grid-cols-12 gap-4">
-				<section className="lg:col-span-8 relative card-dark p-2 animate-fade-in animate-slide-up">
+				<section className="lg:col-span-8 relative card-dark p-2 animate-fade-in animate-slide-up max-h-[70vh] overflow-hidden">
 					{children}
 				</section>
-				<aside className="lg:col-span-4 card-dark p-4 animate-fade-in animate-slide-up">{rightSlot}</aside>
+				<aside className="lg:col-span-4 card-dark p-4 animate-fade-in animate-slide-up max-h-[70vh] overflow-auto">{rightSlot}</aside>
 			</main>
+		</div>
+	);
+}
+
+function RecordControls({ onRecord3, strip }: { onRecord3?: () => void, onRecord6?: () => void, strip?: boolean }) {
+	const [isRecording, setIsRecording] = useState(false);
+	function handleRecord(){
+		setIsRecording(true);
+		if (onRecord3) onRecord3();
+		setTimeout(()=> setIsRecording(false), 3100);
+	}
+	return (
+		<div className={strip ? undefined : "flex items-center gap-2"}>
+			<button aria-label="Record" title="Record 3s" onClick={handleRecord} className={strip ? 'btn-strip' : 'rounded-full w-8 h-8 grid place-items-center border border-white/10 ace-gradient-fill'}>
+				<span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: isRecording ? '2px' : '9999px', background: isRecording ? '#000' : 'red' }} />
+			</button>
+			<button aria-label={isRecording ? 'Pause' : 'Stop'} title={isRecording ? 'Pause' : 'Stop'} className={strip ? 'btn-strip-inverse' : 'rounded-md w-8 h-8 grid place-items-center border border-white/10 ace-gradient-fill'}>
+				<span style={{ display: 'inline-block', width: 10, height: 10, background: isRecording ? 'white' : '#000' }} />
+			</button>
 		</div>
 	);
 }
