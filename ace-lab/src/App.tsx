@@ -93,6 +93,7 @@ function App() {
 
 	const [enhanced, setEnhanced] = useReactState(false)
     const timelineRef = useRef<HTMLDivElement|null>(null)
+	const originalParamsRef = useRef<Record<string, number> | null>(null)
 
     useEffect(()=>{
         function onScrollTimeline(){ timelineRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
@@ -111,14 +112,22 @@ function App() {
 			device={device}
 			onDeviceChange={setDevice}
 			onEnhance={() => {
-				setEnhanced(v=>!v);
 				const s = useLabStore.getState();
-				const p = { ...s.effect.params } as any;
-				p.contrast = (p.contrast ?? 1) * (s.device==='mobile' ? 1.08 : 1.12);
-				p.bloomStrength = Math.min(0.5, (p.bloomStrength ?? 0.25) + 0.08);
-				p.lutAmount = Math.min(0.4, (p.lutAmount ?? 0.2) + 0.08);
-				p.grainAmount = Math.max(0.02, Math.min(0.08, (p.grainAmount ?? 0.05) * 0.9));
-				useLabStore.setState({ effect: { ...s.effect, params: p } });
+				if (!enhanced) {
+					originalParamsRef.current = { ...s.effect.params };
+					const p = { ...s.effect.params } as any;
+					p.contrast = (p.contrast ?? 1) * (s.device==='mobile' ? 1.08 : 1.12);
+					p.bloomStrength = Math.min(0.5, (p.bloomStrength ?? 0.25) + 0.08);
+					p.lutAmount = Math.min(0.4, (p.lutAmount ?? 0.2) + 0.08);
+					p.grainAmount = Math.max(0.02, Math.min(0.08, (p.grainAmount ?? 0.05) * 0.9));
+					useLabStore.setState({ effect: { ...s.effect, params: p } });
+					setEnhanced(true);
+				} else {
+					const orig = originalParamsRef.current; if (orig) {
+						useLabStore.setState({ effect: { ...s.effect, params: orig } });
+					}
+					setEnhanced(false);
+				}
 			}}
 		>
 			{tab === 'Lab' && (
