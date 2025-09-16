@@ -11,12 +11,17 @@ import SettingsPanel from '../lab/SettingsPanel';
 import LibraryPanel from '../lab/LibraryPanel';
 import { useLabStore } from '../store/useLabStore';
 import GeneratePanel from '../lab/GeneratePanel';
+import MotionPanel from '../lab/MotionPanel';
+import StyleTransferPanel from '../lab/StyleTransferPanel';
 
 const tabs = ['Agents', 'Library'] as const;
+const POPOUT_BUTTONS = ['Generate (WebGPU)', 'Motion', 'Style Transfer', 'Generative Fill', 'Effects', 'Text', 'Presets', 'Co-pilot', 'Agents', 'Policy', 'Settings'] as const;
 export type TabKey = typeof tabs[number];
 
+type PopoutName = typeof POPOUT_BUTTONS[number] | 'Library';
+
 export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange, device, onDeviceChange, onEnhance }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void, device: 'mobile'|'desktop', onDeviceChange: (d: 'mobile'|'desktop') => void, onEnhance?: () => void }) {
-	const [openPanel, setOpenPanel] = useState<null | 'Effects' | 'Text' | 'Presets' | 'Co-pilot' | 'Agents' | 'Policy' | 'Settings' | 'Library' | 'Generate (WebGPU)'>(null);
+	const [openPanel, setOpenPanel] = useState<null | PopoutName>(null);
 	const popRef = useRef<HTMLDivElement | null>(null);
     const runAgent = useLabStore(s => s.runAgent);
 	useEffect(()=>{
@@ -27,6 +32,19 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 		if (openPanel) { document.addEventListener('mousedown', onDown); }
 		return ()=> document.removeEventListener('mousedown', onDown);
 	}, [openPanel]);
+	useEffect(()=>{
+		function onKey(e: KeyboardEvent){
+			const tag = (e.target as HTMLElement | null)?.tagName;
+			if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+			switch(e.key){
+				case 'g': case 'G': setOpenPanel(p=> p==='Generate (WebGPU)' ? null : 'Generate (WebGPU)'); break;
+				case 'm': case 'M': setOpenPanel(p=> p==='Motion' ? null : 'Motion'); break;
+				case 't': case 'T': setOpenPanel(p=> p==='Style Transfer' ? null : 'Style Transfer'); break;
+			}
+		}
+		window.addEventListener('keydown', onKey);
+		return ()=> window.removeEventListener('keydown', onKey);
+	}, []);
 	return (
 		<div className="min-h-screen text-[var(--ink-900)] bg-white">
 			<header className="sticky top-0 z-10 backdrop-blur-sm">
@@ -49,8 +67,8 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 								{t}
 							</button>
 						))}
-						{(['Generate (WebGPU)','Generative Fill','Effects','Text','Presets','Co-pilot','Agents','Policy','Settings'] as const).map(name => (
-							<button key={name} className="btn-strip" onClick={()=> setOpenPanel(p => p===name ? null : name)}>{name}</button>
+						{POPOUT_BUTTONS.map(name => (
+							<button key={name} className="btn-strip" onClick={()=> setOpenPanel(name)}>{name}</button>
 						))}
 					</nav>
 					<div className="strip-group">
@@ -65,6 +83,8 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 					<div className="popout-panel" style={{ width: 520 }}>
 						<div className="popout-inner space-y-4">
 							{openPanel === 'Generate (WebGPU)' && <GeneratePanel />}
+							{openPanel === 'Motion' && <MotionPanel />}
+							{openPanel === 'Style Transfer' && <StyleTransferPanel />}
 							{openPanel === 'Effects' && <ControlsPanel />}
 							{openPanel === 'Generative Fill' && <GenerativeFillPanel />}
 							{openPanel === 'Text' && <TextControls />}

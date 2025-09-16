@@ -11,7 +11,11 @@
     "server": "node server/index.mjs",
     "dev:server": "set PORT=4000; node server/index.mjs | cat",
     "test": "node --test server/tests/**/*.mjs",
-    "e2e": "start /B cmd /C vite --port 5173 & npx playwright test"
+    "e2e": "start /B cmd /C vite --port 5173 & npx playwright test",
+    "services:up": "docker compose -f infra/compose/docker-compose.yml up -d --build",
+    "services:down": "docker compose -f infra/compose/docker-compose.yml down -v",
+    "services:smoke": "bash scripts/smoke.sh",
+    "services:smoke:ps": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke.ps1"
   },
   "dependencies": {
     "clsx": "^2.1.1",

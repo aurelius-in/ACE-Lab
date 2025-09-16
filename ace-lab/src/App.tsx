@@ -7,7 +7,7 @@ import RightPanelTabs from './lab/RightPanelTabs'
 import TimelinePanel from './lab/TimelinePanel'
 import LibraryPanel from './lab/LibraryPanel'
 import { captureCanvasWebm, captureScaledWebmFromCanvas, downloadJson } from './utils/media'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLabStore } from './store/useLabStore'
 import KeyboardOverlay from './lab/KeyboardOverlay'
 
@@ -92,6 +92,13 @@ function App() {
 	}, [play.t, togglePlay, setPlayhead, buildPack])
 
 	const [enhanced, setEnhanced] = useReactState(false)
+    const timelineRef = useRef<HTMLDivElement|null>(null)
+
+    useEffect(()=>{
+        function onScrollTimeline(){ timelineRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+        window.addEventListener('ace:scroll-timeline', onScrollTimeline as any);
+        return ()=> window.removeEventListener('ace:scroll-timeline', onScrollTimeline as any);
+    }, [])
 
 	return (
 		<AppShell
@@ -118,6 +125,9 @@ function App() {
 				<>
 					<div className="aspect-video w-full grid place-items-center overflow-hidden">
 						<CanvasHost />
+					</div>
+					<div ref={timelineRef} className="mt-3">
+						<TimelinePanel />
 					</div>
 				</>
 			)}

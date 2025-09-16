@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { useLabStore } from '../store/useLabStore';
 
+type InpaintResponse = { patch_url: string; w: number; h: number };
+
 export default function GenerativeFillPanel(){
     const [prompt, setPrompt] = useState('repair small blemishes');
     const [selecting, setSelecting] = useState(false);
@@ -30,7 +32,9 @@ export default function GenerativeFillPanel(){
         const mask = document.createElement('canvas'); mask.width = w; mask.height = h; const mctx = mask.getContext('2d')!; mctx.fillStyle = '#fff'; mctx.fillRect(0,0,w,h);
         const image_url = crop.toDataURL('image/png'); const mask_url = mask.toDataURL('image/png');
         const res = await fetch('http://localhost:8103/inpaint', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, image_url, mask_url }) });
-        const j = await res.json();
+        if (!res.ok) throw new Error('Inpaint failed');
+        const j: InpaintResponse = await res.json();
+        if (!j.patch_url) throw new Error('Invalid inpaint response');
         const patchImg = new Image(); await new Promise(r => { patchImg.onload = () => r(null); patchImg.src = j.patch_url; });
         const merged = document.createElement('canvas'); merged.width = snap.width; merged.height = snap.height;
         const m = merged.getContext('2d')!; m.drawImage(snap, 0, 0); m.drawImage(patchImg, x, y, w, h);
