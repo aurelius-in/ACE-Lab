@@ -15,11 +15,17 @@ export default function GeneratePanel(){
     const [cfg, setCfg] = useState(1.5);
     const [thumb, setThumb] = useState<HTMLCanvasElement | null>(null);
     const setPrimary = useLabStore(s=>s.setPrimary);
+    const [catalog, setCatalog] = useState<{ name: string; url: string }[]>([]);
 
     useEffect(()=>{
         const prefArg = pref === 'auto' ? undefined : pref;
         init(modelUrl, prefArg as any).catch(()=>{});
     }, [init, modelUrl, pref]);
+    useEffect(()=>{
+        fetch('/models/models.json').then(r=> r.ok ? r.json() : []).then((arr)=>{
+            if (Array.isArray(arr)) setCatalog(arr as any);
+        }).catch(()=>{});
+    }, []);
 
     useEffect(()=>{ try { localStorage.setItem('ace-demo-model-url', modelUrl); } catch {} }, [modelUrl]);
     useEffect(()=>{ try { localStorage.setItem('ace-demo-model-pref', pref); } catch {} }, [pref]);
@@ -48,6 +54,12 @@ export default function GeneratePanel(){
                     setModelUrl('https://github.com/onnx/models/raw/main/vision/classification/squeezenet/model/squeezenet1.0-12.onnx');
                     setPref('auto');
                 }}>Use demo model</button>
+                {catalog.length>0 && (
+                    <select className="input" onChange={e=>{ const found = catalog.find(c=>c.url===e.target.value); if (found) setModelUrl(found.url); }}>
+                        <option value="">Local models…</option>
+                        {catalog.map((m)=> <option key={m.url} value={m.url}>{m.name}</option>)}
+                    </select>
+                )}
             </div>
             <div className="flex gap-2 items-center">
                 <input className="flex-1 input" value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Prompt" onKeyDown={(e)=>{ if (e.key==='Enter' && !running) { onGenerate(); } }} />
