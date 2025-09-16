@@ -4,7 +4,10 @@ import { useLabStore } from '../store/useLabStore';
 
 export default function GeneratePanel(){
     const { ready, device, running, error, init, generate, cancel, lastMs } = useWebGpuGen();
-    const [modelUrl, setModelUrl] = useState('https://example.com/models/sdxl-turbo.onnx');
+    const [modelUrl, setModelUrl] = useState(
+        localStorage.getItem('ace-demo-model-url') ||
+        'https://github.com/onnx/models/raw/main/vision/classification/squeezenet/model/squeezenet1.0-12.onnx'
+    );
     const [pref, setPref] = useState<'auto'|'webgpu'|'wasm'>('auto');
     const [prompt, setPrompt] = useState('neon cityscape, dusk');
     const [seed, setSeed] = useState<number | undefined>(undefined);
@@ -17,6 +20,9 @@ export default function GeneratePanel(){
         const prefArg = pref === 'auto' ? undefined : pref;
         init(modelUrl, prefArg as any).catch(()=>{});
     }, [init, modelUrl, pref]);
+
+    useEffect(()=>{ try { localStorage.setItem('ace-demo-model-url', modelUrl); } catch {} }, [modelUrl]);
+    useEffect(()=>{ try { localStorage.setItem('ace-demo-model-pref', pref); } catch {} }, [pref]);
 
     async function onGenerate(){
         try {
@@ -38,6 +44,10 @@ export default function GeneratePanel(){
                     <option value="webgpu">WebGPU</option>
                     <option value="wasm">WASM</option>
                 </select>
+                <button className="btn-compact" onClick={()=>{
+                    setModelUrl('https://github.com/onnx/models/raw/main/vision/classification/squeezenet/model/squeezenet1.0-12.onnx');
+                    setPref('auto');
+                }}>Use demo model</button>
             </div>
             <div className="flex gap-2 items-center">
                 <input className="flex-1 input" value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Prompt" onKeyDown={(e)=>{ if (e.key==='Enter' && !running) { onGenerate(); } }} />
