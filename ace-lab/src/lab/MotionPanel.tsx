@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useLabStore } from '../store/useLabStore';
 
+type AnimateResponse = { video_url: string; duration_ms: number };
+type RifeResponse = { video_url: string; new_fps: number };
+
 export default function MotionPanel(){
 	const [prompt, setPrompt] = useState('looping neon waveform');
 	const [seconds, setSeconds] = useState<2|4>(2);
@@ -15,7 +18,8 @@ export default function MotionPanel(){
 		setLoading(true);
 		try {
 			const r = await fetch('http://localhost:8101/animate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, seconds, fps, width: 512, height: 512 }) });
-			const j = await r.json();
+			if (!r.ok) throw new Error('Animate failed');
+			const j: AnimateResponse = await r.json();
 			setVideoUrl(j.video_url || null);
 		} finally { setLoading(false); }
 	}
@@ -25,7 +29,8 @@ export default function MotionPanel(){
 		setLoading(true);
 		try {
 			const r = await fetch('http://localhost:8102/interpolate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ video_url: videoUrl, factor }) });
-			const j = await r.json();
+			if (!r.ok) throw new Error('RIFE failed');
+			const j: RifeResponse = await r.json();
 			setVideoUrl(j.video_url || videoUrl);
 		} finally { setLoading(false); }
 	}
