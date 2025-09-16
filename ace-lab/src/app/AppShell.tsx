@@ -15,10 +15,13 @@ import MotionPanel from '../lab/MotionPanel';
 import StyleTransferPanel from '../lab/StyleTransferPanel';
 
 const tabs = ['Agents', 'Library'] as const;
+const POPOUT_BUTTONS = ['Generate (WebGPU)', 'Motion', 'Style Transfer', 'Generative Fill', 'Effects', 'Text', 'Presets', 'Co-pilot', 'Agents', 'Policy', 'Settings'] as const;
 export type TabKey = typeof tabs[number];
 
+type PopoutName = typeof POPOUT_BUTTONS[number] | 'Library';
+
 export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange, device, onDeviceChange, onEnhance }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void, device: 'mobile'|'desktop', onDeviceChange: (d: 'mobile'|'desktop') => void, onEnhance?: () => void }) {
-	const [openPanel, setOpenPanel] = useState<null | 'Effects' | 'Text' | 'Presets' | 'Co-pilot' | 'Agents' | 'Policy' | 'Settings' | 'Library' | 'Generate (WebGPU)' | 'Motion' | 'Style Transfer' | 'Generative Fill'>(null);
+	const [openPanel, setOpenPanel] = useState<null | PopoutName>(null);
 	const popRef = useRef<HTMLDivElement | null>(null);
     const runAgent = useLabStore(s => s.runAgent);
 	useEffect(()=>{
@@ -64,7 +67,7 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 								{t}
 							</button>
 						))}
-						{(['Generate (WebGPU)','Motion','Style Transfer','Generative Fill','Effects','Text','Presets','Co-pilot','Agents','Policy','Settings'] as const).map(name => (
+						{POPOUT_BUTTONS.map(name => (
 							<button key={name} className="btn-strip" onClick={()=> setOpenPanel(name)}>{name}</button>
 						))}
 					</nav>
