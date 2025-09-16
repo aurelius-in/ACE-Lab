@@ -1,18 +1,18 @@
-import { type PropsWithChildren, useEffect, useRef, useState } from 'react';
+import { type PropsWithChildren, useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { clsx } from 'clsx';
-import ControlsPanel from '../lab/ControlsPanel';
-import TextControls from '../lab/TextControls';
-import PresetsPanel from '../lab/presets/PresetsPanel';
-import CopilotPanel from '../lab/copilot/CopilotPanel';
-import AgentsPanel from '../lab/copilot/AgentsPanel';
-import PolicyPanel from '../lab/policy/PolicyPanel';
-import GenerativeFillPanel from '../lab/GenerativeFillPanel';
-import SettingsPanel from '../lab/SettingsPanel';
-import LibraryPanel from '../lab/LibraryPanel';
+const ControlsPanel = lazy(() => import('../lab/ControlsPanel'));
+const TextControls = lazy(() => import('../lab/TextControls'));
+const PresetsPanel = lazy(() => import('../lab/presets/PresetsPanel'));
+const CopilotPanel = lazy(() => import('../lab/copilot/CopilotPanel'));
+const AgentsPanel = lazy(() => import('../lab/copilot/AgentsPanel'));
+const PolicyPanel = lazy(() => import('../lab/policy/PolicyPanel'));
+const GenerativeFillPanel = lazy(() => import('../lab/GenerativeFillPanel'));
+const SettingsPanel = lazy(() => import('../lab/SettingsPanel'));
+const LibraryPanel = lazy(() => import('../lab/LibraryPanel'));
 import { useLabStore } from '../store/useLabStore';
-import GeneratePanel from '../lab/GeneratePanel';
-import MotionPanel from '../lab/MotionPanel';
-import StyleTransferPanel from '../lab/StyleTransferPanel';
+const GeneratePanel = lazy(() => import('../lab/GeneratePanel'));
+const MotionPanel = lazy(() => import('../lab/MotionPanel'));
+const StyleTransferPanel = lazy(() => import('../lab/StyleTransferPanel'));
 
 const tabs = ['Agents', 'Library'] as const;
 const POPOUT_BUTTONS = ['Generate (WebGPU)', 'Motion', 'Style Transfer', 'Generative Fill', 'Effects', 'Text', 'Presets', 'Co-pilot', 'Agents', 'Policy', 'Settings'] as const;
@@ -82,18 +82,20 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 				<div ref={popRef} className="fixed z-50 left-1/2 -translate-x-1/2 mt-2" style={{ top: 96 }}>
 					<div className="popout-panel" style={{ width: 520 }}>
 						<div className="popout-inner space-y-4">
-							{openPanel === 'Generate (WebGPU)' && <GeneratePanel />}
-							{openPanel === 'Motion' && <MotionPanel />}
-							{openPanel === 'Style Transfer' && <StyleTransferPanel />}
-							{openPanel === 'Effects' && <ControlsPanel />}
-							{openPanel === 'Generative Fill' && <GenerativeFillPanel />}
-							{openPanel === 'Text' && <TextControls />}
-							{openPanel === 'Presets' && <PresetsPanel />}
-							{openPanel === 'Co-pilot' && <CopilotPanel />}
-							{openPanel === 'Agents' && <AgentsPanel />}
-							{openPanel === 'Policy' && <PolicyPanel />}
-							{openPanel === 'Settings' && <SettingsPanel />}
-							{openPanel === 'Library' && <LibraryPanel />}
+							<Suspense fallback={<div className="text-sm text-black/60">Loading…</div>}>
+								{openPanel === 'Generate (WebGPU)' && <GeneratePanel />}
+								{openPanel === 'Motion' && <MotionPanel />}
+								{openPanel === 'Style Transfer' && <StyleTransferPanel />}
+								{openPanel === 'Effects' && <ControlsPanel />}
+								{openPanel === 'Generative Fill' && <GenerativeFillPanel />}
+								{openPanel === 'Text' && <TextControls />}
+								{openPanel === 'Presets' && <PresetsPanel />}
+								{openPanel === 'Co-pilot' && <CopilotPanel />}
+								{openPanel === 'Agents' && <AgentsPanel />}
+								{openPanel === 'Policy' && <PolicyPanel />}
+								{openPanel === 'Settings' && <SettingsPanel />}
+								{openPanel === 'Library' && <LibraryPanel />}
+							</Suspense>
 						</div>
 					</div>
 				</div>
