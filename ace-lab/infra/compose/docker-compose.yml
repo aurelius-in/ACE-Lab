@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  micro-inpaint:
+    build: ../../services/micro-inpaint
+    image: ace/micro-inpaint:dev
+    ports: ['8103:8103']
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: uvicorn main:app --host 0.0.0.0 --port 8103
+  micro-animate:
+    build: ../../services/micro-animate
+    image: ace/micro-animate:dev
+    ports: ['8101:8101']
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: uvicorn main:app --host 0.0.0.0 --port 8101
+  micro-rife:
+    build: ../../services/micro-rife
+    image: ace/micro-rife:dev
+    ports: ['8102:8102']
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: uvicorn main:app --host 0.0.0.0 --port 8102
+
+
