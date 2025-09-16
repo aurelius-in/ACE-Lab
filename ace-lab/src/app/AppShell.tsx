@@ -6,15 +6,17 @@ import PresetsPanel from '../lab/presets/PresetsPanel';
 import CopilotPanel from '../lab/copilot/CopilotPanel';
 import AgentsPanel from '../lab/copilot/AgentsPanel';
 import PolicyPanel from '../lab/policy/PolicyPanel';
+import GenerativeFillPanel from '../lab/GenerativeFillPanel';
 import SettingsPanel from '../lab/SettingsPanel';
 import LibraryPanel from '../lab/LibraryPanel';
 import { useLabStore } from '../store/useLabStore';
+import GeneratePanel from '../lab/GeneratePanel';
 
 const tabs = ['Agents', 'Library'] as const;
 export type TabKey = typeof tabs[number];
 
 export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange, device, onDeviceChange, onEnhance }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void, device: 'mobile'|'desktop', onDeviceChange: (d: 'mobile'|'desktop') => void, onEnhance?: () => void }) {
-	const [openPanel, setOpenPanel] = useState<null | 'Effects' | 'Text' | 'Presets' | 'Co-pilot' | 'Agents' | 'Policy' | 'Settings' | 'Library'>(null);
+	const [openPanel, setOpenPanel] = useState<null | 'Effects' | 'Text' | 'Presets' | 'Co-pilot' | 'Agents' | 'Policy' | 'Settings' | 'Library' | 'Generate (WebGPU)'>(null);
 	const popRef = useRef<HTMLDivElement | null>(null);
     const runAgent = useLabStore(s => s.runAgent);
 	useEffect(()=>{
@@ -47,7 +49,7 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 								{t}
 							</button>
 						))}
-						{(['Effects','Text','Presets','Co-pilot','Agents','Policy','Settings'] as const).map(name => (
+						{(['Generate (WebGPU)','Generative Fill','Effects','Text','Presets','Co-pilot','Agents','Policy','Settings'] as const).map(name => (
 							<button key={name} className="btn-strip" onClick={()=> setOpenPanel(p => p===name ? null : name)}>{name}</button>
 						))}
 					</nav>
@@ -62,7 +64,9 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 				<div ref={popRef} className="fixed z-50 left-1/2 -translate-x-1/2 mt-2" style={{ top: 96 }}>
 					<div className="popout-panel" style={{ width: 520 }}>
 						<div className="popout-inner space-y-4">
+							{openPanel === 'Generate (WebGPU)' && <GeneratePanel />}
 							{openPanel === 'Effects' && <ControlsPanel />}
+							{openPanel === 'Generative Fill' && <GenerativeFillPanel />}
 							{openPanel === 'Text' && <TextControls />}
 							{openPanel === 'Presets' && <PresetsPanel />}
 							{openPanel === 'Co-pilot' && <CopilotPanel />}
