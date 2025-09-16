@@ -21,6 +21,8 @@ export default function MotionPanel(){
 			if (!r.ok) throw new Error('Animate failed');
 			const j: AnimateResponse = await r.json();
 			setVideoUrl(j.video_url || null);
+		} catch {
+			useLabStore.getState().showToast?.('Animate failed');
 		} finally { setLoading(false); }
 	}
 
@@ -32,6 +34,8 @@ export default function MotionPanel(){
 			if (!r.ok) throw new Error('RIFE failed');
 			const j: RifeResponse = await r.json();
 			setVideoUrl(j.video_url || videoUrl);
+		} catch {
+			useLabStore.getState().showToast?.('RIFE failed');
 		} finally { setLoading(false); }
 	}
 
