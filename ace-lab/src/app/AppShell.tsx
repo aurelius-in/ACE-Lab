@@ -29,6 +29,19 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 		if (openPanel) { document.addEventListener('mousedown', onDown); }
 		return ()=> document.removeEventListener('mousedown', onDown);
 	}, [openPanel]);
+	useEffect(()=>{
+		function onKey(e: KeyboardEvent){
+			const tag = (e.target as HTMLElement | null)?.tagName;
+			if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+			switch(e.key){
+				case 'g': case 'G': setOpenPanel(p=> p==='Generate (WebGPU)' ? null : 'Generate (WebGPU)'); break;
+				case 'm': case 'M': setOpenPanel(p=> p==='Motion' ? null : 'Motion'); break;
+				case 't': case 'T': setOpenPanel(p=> p==='Style Transfer' ? null : 'Style Transfer'); break;
+			}
+		}
+		window.addEventListener('keydown', onKey);
+		return ()=> window.removeEventListener('keydown', onKey);
+	}, []);
 	return (
 		<div className="min-h-screen text-[var(--ink-900)] bg-white">
 			<header className="sticky top-0 z-10 backdrop-blur-sm">
