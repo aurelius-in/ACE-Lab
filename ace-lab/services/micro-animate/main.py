@@ -16,7 +16,8 @@ class AnimateReq(BaseModel):
 
 @app.get('/health')
 def health():
-    return { 'ok': True }
+    # In a real pipeline, also return model/card availability
+    return { 'ok': True, 'model': 'AnimateDiff (stub)', 'ready': True }
 
 @app.post('/animate')
 def animate(req: AnimateReq):

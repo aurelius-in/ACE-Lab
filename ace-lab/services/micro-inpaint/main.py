@@ -15,7 +15,7 @@ class InpaintReq(BaseModel):
 
 @app.get('/health')
 def health():
-    return { 'ok': True }
+    return { 'ok': True, 'model': 'SDXL-Turbo Inpaint (stub)', 'ready': True }
 
 @app.post('/inpaint')
 def inpaint(req: InpaintReq):

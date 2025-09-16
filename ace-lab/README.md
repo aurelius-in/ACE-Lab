@@ -90,6 +90,18 @@ Agentic Creative Experience Lab for rapid visual look‑development. Real‑time
 - **Motion**: AnimateDiff produces short looping clips; RIFE increases fps for smoother motion. Results can be previewed and inserted as the primary clip with transitions and effects applied.
 - **Style Transfer**: Runs locally with TF.js. Blend strength allows subtle looks while keeping shader‑based adjustments available afterward.
 
+### Local ONNX models (optional)
+
+- Drop `.onnx` files under `public/models/` and list them in `public/models/models.json` as:
+
+```
+[
+  { "name": "My Model", "url": "/models/my-model.onnx" }
+]
+```
+
+- In the app, open Generate (WebGPU) and pick from the “Local models” dropdown. You can also paste a public URL or use the built‑in demo model.
+
 ## Enhance button (what it does and why)
 
 - One‑click boost intended to improve perceived quality of the current photo/video without changing the creative intent.
@@ -126,6 +138,14 @@ Agentic Creative Experience Lab for rapid visual look‑development. Real‑time
 ```
 npm install
 npm run dev
+```
+
+### Demo (guided)
+
+Run a short headed demo that opens Generate, uses a demo ONNX, sends to canvas, and opens Motion:
+
+```
+npm run demo
 ```
 
 Optional: spin up motion/inpaint services (Docker required), then smoke-test endpoints:

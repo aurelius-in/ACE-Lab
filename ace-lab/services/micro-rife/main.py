@@ -11,7 +11,7 @@ class RifeReq(BaseModel):
 
 @app.get('/health')
 def health():
-    return { 'ok': True }
+    return { 'ok': True, 'model': 'RIFE (stub)', 'ready': True }
 
 @app.post('/interpolate')
 def interpolate(req: RifeReq):

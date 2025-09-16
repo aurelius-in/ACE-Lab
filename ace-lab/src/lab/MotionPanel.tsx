@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useLabStore } from '../store/useLabStore';
-
-type AnimateResponse = { video_url: string; duration_ms: number };
-type RifeResponse = { video_url: string; new_fps: number };
+import type { AnimateResponse, RifeResponse } from '../types/services';
 
 export default function MotionPanel(){
 	const [prompt, setPrompt] = useState('looping neon waveform');
@@ -21,6 +19,8 @@ export default function MotionPanel(){
 			if (!r.ok) throw new Error('Animate failed');
 			const j: AnimateResponse = await r.json();
 			setVideoUrl(j.video_url || null);
+		} catch {
+			useLabStore.getState().showToast?.('Animate failed');
 		} finally { setLoading(false); }
 	}
 
@@ -32,6 +32,8 @@ export default function MotionPanel(){
 			if (!r.ok) throw new Error('RIFE failed');
 			const j: RifeResponse = await r.json();
 			setVideoUrl(j.video_url || videoUrl);
+		} catch {
+			useLabStore.getState().showToast?.('RIFE failed');
 		} finally { setLoading(false); }
 	}
 
