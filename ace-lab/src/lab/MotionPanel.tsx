@@ -8,6 +8,8 @@ export default function MotionPanel(){
 	const [loading, setLoading] = useState(false);
 	const [videoUrl, setVideoUrl] = useState<string | null>(null);
 	const setPrimaryVideo = useLabStore(s=>s.setPrimaryVideo)!;
+	const setSecondaryVideo = useLabStore(s=>s.setSecondaryVideo)!;
+	const setEffectId = useLabStore(s=>s.setEffectId);
 
 	async function animate(){
 		setLoading(true);
@@ -29,6 +31,13 @@ export default function MotionPanel(){
 	}
 
 	function sendToCanvas(){ if (videoUrl) setPrimaryVideo(videoUrl); }
+	function sendToTimeline(){
+		if (!videoUrl) return;
+		setSecondaryVideo(videoUrl);
+		setEffectId('crosszoom');
+		const setState = (useLabStore.setState as unknown) as (p: any) => void;
+		setState({ timeline: { keyframes: [ { t: 0.0, mix: 0 }, { t: 0.5, mix: 1 }, { t: 1.0, mix: 0 } ] } });
+	}
 
 	return (
 		<div className="space-y-3">
@@ -51,6 +60,7 @@ export default function MotionPanel(){
 						<button className="btn-compact" onClick={()=>interpolate(2)} disabled={loading}>RIFE 2×</button>
 						<button className="btn-compact" onClick={()=>interpolate(3)} disabled={loading}>RIFE 3×</button>
 						<button className="btn-primary" onClick={sendToCanvas}>Send to Canvas</button>
+						<button className="btn-compact" onClick={sendToTimeline}>Send to Timeline</button>
 					</div>
 				</div>
 			)}
