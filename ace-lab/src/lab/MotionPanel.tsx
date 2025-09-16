@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useLabStore } from '../store/useLabStore';
-
-type AnimateResponse = { video_url: string; duration_ms: number };
-type RifeResponse = { video_url: string; new_fps: number };
+import type { AnimateResponse, RifeResponse } from '../types/services';
 
 export default function MotionPanel(){
 	const [prompt, setPrompt] = useState('looping neon waveform');

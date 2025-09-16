@@ -127,21 +127,6 @@ function RecordControls({ onRecord3, strip }: { onRecord3?: () => void, onRecord
 	);
 }
 
-function BeakerIcon() {
-	return (
-		<svg viewBox="0 0 24 24" className="w-6 h-6">
-			<defs>
-				<linearGradient id="ace-g" x1="0" y1="0" x2="1" y2="1">
-					<stop offset="0%" stopColor="var(--ace-g1)" />
-					<stop offset="50%" stopColor="var(--ace-g2)" />
-					<stop offset="100%" stopColor="var(--ace-g3)" />
-				</linearGradient>
-			</defs>
-			<path d="M8 2h8v2l-1 2v6.5l3.47 5.78A2 2 0 0 1 16.72 22H7.28a2 2 0 0 1-1.75-3.72L9 12.5V6L8 4z" fill="none" stroke="url(#ace-g)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-		</svg>
-	);
-}
-
 export default AppShell;
 
 

@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { useLabStore } from '../store/useLabStore';
-
-type InpaintResponse = { patch_url: string; w: number; h: number };
+import type { InpaintResponse } from '../types/services';
 
 export default function GenerativeFillPanel(){
     const [prompt, setPrompt] = useState('repair small blemishes');
