@@ -10,6 +10,19 @@ Agentic Creative Experience Lab for rapid visual look‑development. Real‑time
   <em>Interactive tour: menus, canvas edits, and converting a clip to VHS quality</em>
 </p>
 
+## Capabilities
+
+- Real‑time WebGL canvas with shader pipeline (Halftone, Cross‑zoom, VHS, Post).
+- Image generation (WebGPU/WASM): ONNX Runtime Web thumbnail gen with model URL or local models catalog; device + timing shown; one‑click “Send to Canvas”.
+- Generative Fill: box‑select area → patch inpaint via microservice → composite back to image.
+- Motion: AnimateDiff (short loops) and RIFE interpolation; preview, then “Send to Canvas/Timeline” (auto‑scrolls) with transitions/effects.
+- Style Transfer (TF.js): fast local styles with strength blending; flows through shaders.
+- Enhance toggle: snapshots/restores effect params (no accumulation).
+- Timeline: keyframes with easing, scrubber, keyboard controls; ready for clip list.
+- Export: WebM/GIF, bitrate control; policy hooks for pre‑export checks and auto‑fix.
+- Keyboard shortcuts: Space play/pause, arrows scrub, E export, R/6 record, S save pack, A apply ACE look, G/M/T open popouts.
+- Demo ready: `npm run demo` runs a guided Playwright demo; services have health checks and Docker Compose.
+
 ## Tech stack
 
 - **Vite + React + TypeScript**: fast HMR and typed UI.
