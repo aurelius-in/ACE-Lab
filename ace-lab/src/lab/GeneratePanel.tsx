@@ -3,7 +3,7 @@ import { useWebGpuGen } from './hooks/useWebGpuGen';
 import { useLabStore } from '../store/useLabStore';
 
 export default function GeneratePanel(){
-    const { ready, device, running, error, init, generate, cancel } = useWebGpuGen();
+    const { ready, device, running, error, init, generate, cancel, lastMs } = useWebGpuGen();
     const [modelUrl, setModelUrl] = useState('https://example.com/models/sdxl-turbo.onnx');
     const [prompt, setPrompt] = useState('neon cityscape, dusk');
     const [seed, setSeed] = useState<number | undefined>(undefined);
@@ -22,9 +22,9 @@ export default function GeneratePanel(){
 
     return (
         <div className="space-y-3">
-            <div className="text-sm text-black/70">Device: {device}</div>
+            <div className="text-sm text-black/70">Device: {device} {lastMs!=null && <span className="text-black/50">· {lastMs} ms</span>}</div>
             <div className="flex gap-2 items-center">
-                <input className="flex-1 input" value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Prompt" />
+                <input className="flex-1 input" value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Prompt" onKeyDown={(e)=>{ if (e.key==='Enter' && !running) { onGenerate(); } }} />
                 <button className="btn-compact" disabled={running} onClick={onGenerate}>{running ? 'Generating…' : 'Generate'}</button>
                 {running && <button className="btn-compact" onClick={cancel}>Cancel</button>}
             </div>
