@@ -130,6 +130,16 @@ npm install
 npm run dev
 ```
 
+Optional: spin up motion/inpaint services (Docker required), then smoke-test endpoints:
+
+```
+npm run services:up
+# mac/linux
+npm run services:smoke
+# windows powershell
+npm run services:smoke:ps
+```
+
 ### Backend preset service
 
 Run in a second terminal from `ace-lab/ace-lab`:
