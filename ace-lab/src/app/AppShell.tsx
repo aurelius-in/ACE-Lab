@@ -11,12 +11,14 @@ import SettingsPanel from '../lab/SettingsPanel';
 import LibraryPanel from '../lab/LibraryPanel';
 import { useLabStore } from '../store/useLabStore';
 import GeneratePanel from '../lab/GeneratePanel';
+import MotionPanel from '../lab/MotionPanel';
+import StyleTransferPanel from '../lab/StyleTransferPanel';
 
 const tabs = ['Agents', 'Library'] as const;
 export type TabKey = typeof tabs[number];
 
 export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, activeTab, onTabChange, device, onDeviceChange, onEnhance }: PropsWithChildren & { rightSlot?: React.ReactNode, onExport?: () => void, onRecord3?: () => void, onRecord6?: () => void, activeTab: TabKey, onTabChange: (t: TabKey) => void, device: 'mobile'|'desktop', onDeviceChange: (d: 'mobile'|'desktop') => void, onEnhance?: () => void }) {
-	const [openPanel, setOpenPanel] = useState<null | 'Effects' | 'Text' | 'Presets' | 'Co-pilot' | 'Agents' | 'Policy' | 'Settings' | 'Library' | 'Generate (WebGPU)'>(null);
+	const [openPanel, setOpenPanel] = useState<null | 'Effects' | 'Text' | 'Presets' | 'Co-pilot' | 'Agents' | 'Policy' | 'Settings' | 'Library' | 'Generate (WebGPU)' | 'Motion' | 'Style Transfer' | 'Generative Fill'>(null);
 	const popRef = useRef<HTMLDivElement | null>(null);
     const runAgent = useLabStore(s => s.runAgent);
 	useEffect(()=>{
@@ -49,8 +51,8 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 								{t}
 							</button>
 						))}
-						{(['Generate (WebGPU)','Generative Fill','Effects','Text','Presets','Co-pilot','Agents','Policy','Settings'] as const).map(name => (
-							<button key={name} className="btn-strip" onClick={()=> setOpenPanel(p => p===name ? null : name)}>{name}</button>
+						{(['Generate (WebGPU)','Motion','Style Transfer','Generative Fill','Effects','Text','Presets','Co-pilot','Agents','Policy','Settings'] as const).map(name => (
+							<button key={name} className="btn-strip" onClick={()=> setOpenPanel(name)}>{name}</button>
 						))}
 					</nav>
 					<div className="strip-group">
@@ -65,6 +67,8 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 					<div className="popout-panel" style={{ width: 520 }}>
 						<div className="popout-inner space-y-4">
 							{openPanel === 'Generate (WebGPU)' && <GeneratePanel />}
+							{openPanel === 'Motion' && <MotionPanel />}
+							{openPanel === 'Style Transfer' && <StyleTransferPanel />}
 							{openPanel === 'Effects' && <ControlsPanel />}
 							{openPanel === 'Generative Fill' && <GenerativeFillPanel />}
 							{openPanel === 'Text' && <TextControls />}
