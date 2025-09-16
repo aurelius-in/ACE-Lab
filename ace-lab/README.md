@@ -14,6 +14,10 @@ Agentic Creative Experience Lab for rapid visual look‑development. Real‑time
 - **Zustand**: lightweight state store (`src/store/useLabStore.ts`).
 - **WebGL2 + GLSL shaders**: halftone, cross‑zoom, VHS, bloom/post.
 - **Tiny‑SDF**: crisp text rendering on the canvas.
+- **ONNX Runtime Web (WebGPU/WASM)**: browser‑native image generation (SDXL‑Turbo/Lightning/LCM‑LoRA) for fast 256–512px thumbnails.
+- **TensorFlow.js**: on‑device neural style transfer for interactive look blending.
+- **FastAPI microservices**: AnimateDiff (short loops), RIFE (frame interpolation), SDXL‑Turbo Inpaint (patch fill).
+- **Docker Compose**: one‑command bring‑up of motion/inpaint microservices.
 - **OPA (policy)**: in‑browser WASM when available, server fallback.
 - **Express server**: simple preset/token endpoints (`server/`).
 - **Playwright**: basic e2e.
@@ -66,6 +70,10 @@ Agentic Creative Experience Lab for rapid visual look‑development. Real‑time
 
 ## Popout panels (what they’re for)
 
+- **Generate (WebGPU)**: on‑device thumbnail generation with prompt/seed/steps/cfg. Preview and “Send to Canvas”.
+- **Generative Fill**: box‑select an area over a canvas snapshot, call Inpaint service, and composite the returned patch back onto the primary image.
+- **Motion**: AnimateDiff creates a 2–4s clip at 12/24 fps; RIFE upsamples fps 2×/3×. Preview and “Send to Canvas/Timeline”.
+- **Style Transfer**: apply fast style transfer (Mosaic/Udnie/Candy/…) with a strength slider; result continues through the shader pipeline.
 - **Effects**: switches between Halftone/Cross‑zoom/VHS and exposes sliders above.
 - **Text**: toggles SDF text and its animation/outline.
 - **Presets**: Save current look, import/export JSON, apply saved styles.
@@ -74,6 +82,13 @@ Agentic Creative Experience Lab for rapid visual look‑development. Real‑time
 - **Policy**: evaluate export policy; shows violations and one‑click fix.
 - **Settings**: export bitrate, timeline snap granularity.
 - **Library**: status and clear actions for Image A/B, and style‑pack import/export.
+
+## Image & video generation (overview)
+
+- **Image (WebGPU)**: Uses ONNX Runtime Web to generate 256–512px previews in ≈1–2s on modern GPUs. Sliders for very low steps and compact CFG to keep latency low. One‑click “Send to Canvas” passes the result into the shader pipeline (Halftone/VHS/Post).
+- **Generative Fill**: For small areas, a crop + mask is sent to the Inpaint microservice (SDXL‑Turbo patch). Returned PNG is composited into the original frame at the selected coordinates.
+- **Motion**: AnimateDiff produces short looping clips; RIFE increases fps for smoother motion. Results can be previewed and inserted as the primary clip with transitions and effects applied.
+- **Style Transfer**: Runs locally with TF.js. Blend strength allows subtle looks while keeping shader‑based adjustments available afterward.
 
 ## Enhance button (what it does and why)
 
@@ -132,6 +147,20 @@ npm run dev:server
 - WebM export (bitrate from Settings). Optional GIF export (via command in the Lab tab).
 - Policy checks run before export with auto‑fix suggestions (e.g., width for mobile).
 
+## Microservices (run locally)
+
+- Bring up services (inpaint/animate/rife) with Docker Compose:
+
+```
+docker compose -f infra/compose/docker-compose.yml up -d --build
+```
+
+- Quick smoke test (after services are up):
+
+```
+bash scripts/smoke.sh
+```
+
 ## Project map
 
 - `src/lab/CanvasHost.tsx`: WebGL renderer and shader pipeline.
@@ -139,6 +168,13 @@ npm run dev:server
 - `src/shaders/*`: fragment shaders for blocks and post.
 - `src/utils/media.ts`: capture/export helpers.
 - `server/`: minimal Express service and tests.
+- `packages/webgpu-gen`: WebGPU/WASM image generator (ONNX Runtime Web wrapper).
+- `packages/style-transfer`: TF.js fast style transfer utilities.
+- `services/micro-animate`: FastAPI service for AnimateDiff.
+- `services/micro-rife`: FastAPI service for RIFE interpolation.
+- `services/micro-inpaint`: FastAPI service for SDXL‑Turbo inpaint (patch fill only).
+- `infra/compose/docker-compose.yml`: compose file for local services.
+- `scripts/smoke.sh`: sanity checks and tiny sample calls.
 
 ## Additional capabilities
 
