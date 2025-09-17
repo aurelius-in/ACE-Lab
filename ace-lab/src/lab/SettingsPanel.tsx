@@ -45,6 +45,10 @@ export default function SettingsPanel(){
 					<input className="mt-1 w-full rounded-xl bg-white border border-black/10 px-2 py-1 text-black" type="number" value={exportSettings.height ?? ''} onChange={(e)=>setExportSize(exportSettings.width, Number(e.target.value)||undefined)} />
 				</label>
 			</div>
+			<div className="flex gap-2">
+				<button className="btn-compact" onClick={()=> useLabStore.getState().saveProjectToLocal?.()}>Save Project</button>
+				<button className="btn-compact" onClick={()=> useLabStore.getState().loadProjectFromLocal?.()}>Load Project</button>
+			</div>
 			<label className="block text-sm">
 				<div className="flex justify-between"><span className="text-black/70">Audio Volume</span><span className="text-black/60">{Math.round((exportSettings.audioVolume ?? 1)*100)}%</span></div>
 				<input type="range" min={0} max={1} step={0.01} value={exportSettings.audioVolume ?? 1} onChange={(e)=> setState({ exportSettings: { ...exportSettings, audioVolume: Number(e.target.value) } })} />

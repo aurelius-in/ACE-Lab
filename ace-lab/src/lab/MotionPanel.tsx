@@ -17,7 +17,8 @@ export default function MotionPanel(){
     async function animate(){
 		setLoading(true);
 		try {
-            const j = await fetchJsonWithRetry<AnimateResponse>('http://localhost:8101/animate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, seconds, fps, width: 512, height: 512 }) }, { retries: 2, backoffMs: 500 });
+            const token = localStorage.getItem('ace-token');
+            const j = await fetchJsonWithRetry<AnimateResponse>('http://localhost:8101/animate', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ prompt, seconds, fps, width: 512, height: 512 }) }, { retries: 2, backoffMs: 500 });
 			setVideoUrl(j.video_url || null);
 		} catch {
 			useLabStore.getState().showToast?.('Animate failed');
@@ -28,7 +29,8 @@ export default function MotionPanel(){
 		if (!videoUrl) return;
 		setLoading(true);
 		try {
-            const j = await fetchJsonWithRetry<RifeResponse>('http://localhost:8102/interpolate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ video_url: videoUrl, factor }) }, { retries: 2, backoffMs: 500 });
+            const token = localStorage.getItem('ace-token');
+            const j = await fetchJsonWithRetry<RifeResponse>('http://localhost:8102/interpolate', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ video_url: videoUrl, factor }) }, { retries: 2, backoffMs: 500 });
 			setVideoUrl(j.video_url || videoUrl);
 		} catch {
 			useLabStore.getState().showToast?.('RIFE failed');
