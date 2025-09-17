@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLabStore } from '../store/useLabStore';
 import type { AnimateResponse, RifeResponse } from '../types/services';
+import { fetchJsonWithRetry } from '../utils/net';
 
 export default function MotionPanel(){
 	const [prompt, setPrompt] = useState('looping neon waveform');
@@ -13,25 +14,21 @@ export default function MotionPanel(){
 	const setEffectId = useLabStore(s=>s.setEffectId);
 	const addClip = useLabStore(s=>s.addClip!);
 
-	async function animate(){
+    async function animate(){
 		setLoading(true);
 		try {
-			const r = await fetch('http://localhost:8101/animate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, seconds, fps, width: 512, height: 512 }) });
-			if (!r.ok) throw new Error('Animate failed');
-			const j: AnimateResponse = await r.json();
+            const j = await fetchJsonWithRetry<AnimateResponse>('http://localhost:8101/animate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, seconds, fps, width: 512, height: 512 }) }, { retries: 2, backoffMs: 500 });
 			setVideoUrl(j.video_url || null);
 		} catch {
 			useLabStore.getState().showToast?.('Animate failed');
 		} finally { setLoading(false); }
 	}
 
-	async function interpolate(factor: 2|3){
+    async function interpolate(factor: 2|3){
 		if (!videoUrl) return;
 		setLoading(true);
 		try {
-			const r = await fetch('http://localhost:8102/interpolate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ video_url: videoUrl, factor }) });
-			if (!r.ok) throw new Error('RIFE failed');
-			const j: RifeResponse = await r.json();
+            const j = await fetchJsonWithRetry<RifeResponse>('http://localhost:8102/interpolate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ video_url: videoUrl, factor }) }, { retries: 2, backoffMs: 500 });
 			setVideoUrl(j.video_url || videoUrl);
 		} catch {
 			useLabStore.getState().showToast?.('RIFE failed');

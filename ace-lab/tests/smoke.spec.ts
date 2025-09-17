@@ -46,5 +46,10 @@ test('export flow after generate', async ({ page }) => {
     await page.getByRole('button', { name: 'Generate', exact: true }).click();
     await expect(page.locator('img[alt="thumb"]')).toBeVisible();
     await page.getByRole('button', { name: 'Send to Canvas' }).click();
-    await page.getByRole('button', { name: 'Export video' }).click();
+    const [dl] = await Promise.all([
+        page.waitForEvent('download'),
+        page.getByRole('button', { name: 'Export video' }).click()
+    ]);
+    const name = dl.suggestedFilename();
+    expect(name.endsWith('.webm')).toBeTruthy();
 });

@@ -15,7 +15,7 @@ export default function SettingsPanel(){
 	return (
 		<div className="space-y-4 bg-white text-black rounded-lg p-3">
 			<h3 className="text-sm">Settings</h3>
-			<div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
 				<label className="block text-sm">
 					<div className="flex justify-between"><span className="text-black/70">Bitrate (kbps)</span><span className="text-black/60">{exportSettings.bitrateKbps ?? 6000}</span></div>
 					<input type="range" min={1000} max={20000} step={500} value={exportSettings.bitrateKbps ?? 6000} onChange={(e)=>setBitrate(Number(e.target.value))} />
@@ -25,10 +25,15 @@ export default function SettingsPanel(){
 					<input type="range" min={0.005} max={0.2} step={0.005} value={snap} onChange={(e)=>applySnap(Number(e.target.value))} />
 				</label>
 			</div>
+                <label className="block text-sm">
+                    <span className="text-black/70">Audio URL (timeline export)</span>
+                    <input className="mt-1 w-full rounded-xl bg-white border border-black/10 px-2 py-1 text-black" type="text" placeholder="https://.../audio.mp3" value={exportSettings.audioUrl || ''} onChange={(e)=> useLabStore.getState().setExportAudioUrl?.(e.target.value || undefined)} />
+                </label>
 			<div className="flex items-center gap-2 text-sm">
 				<span className="text-black/70">Presets:</span>
 				<button className="btn-compact" onClick={()=>preset('1080p')}>1080p@24</button>
 				<button className="btn-compact" onClick={()=>preset('square')}>Square@30</button>
+				<button className="btn-compact" onClick={()=> setExportSize(1080, 1920)}>Vertical@30</button>
 			</div>
 			<div className="grid grid-cols-2 gap-3">
 				<label className="block text-sm">
@@ -40,6 +45,10 @@ export default function SettingsPanel(){
 					<input className="mt-1 w-full rounded-xl bg-white border border-black/10 px-2 py-1 text-black" type="number" value={exportSettings.height ?? ''} onChange={(e)=>setExportSize(exportSettings.width, Number(e.target.value)||undefined)} />
 				</label>
 			</div>
+			<label className="block text-sm">
+				<div className="flex justify-between"><span className="text-black/70">Audio Volume</span><span className="text-black/60">{Math.round((exportSettings.audioVolume ?? 1)*100)}%</span></div>
+				<input type="range" min={0} max={1} step={0.01} value={exportSettings.audioVolume ?? 1} onChange={(e)=> setState({ exportSettings: { ...exportSettings, audioVolume: Number(e.target.value) } })} />
+			</label>
 		</div>
 	);
 }

@@ -236,3 +236,7 @@ Compile Rego to WASM (requires OPA CLI) and place it at `public/policy/policy.wa
 ```
 opa build -t wasm -e ace/policy/allow -o public/policy/policy.wasm src/policy/rules.rego
 ```
+
+## Timeline export (multi-clip)
+
+You can export the timeline as a single WebM from the Clips section using Export Timeline. The exporter stitches image and video clips, supports FPS/bitrate presets, and optionally mixes an audio track (browser captureStream). In production, use the background export worker for long renders.

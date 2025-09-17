@@ -12,7 +12,12 @@ test('demo: generate → send to canvas → motion → export', async ({ page })
 
     await page.getByRole('button', { name: 'Motion' }).click();
     await expect(page.getByRole('button', { name: 'Animate' })).toBeVisible();
-    await page.getByRole('button', { name: 'Export video' }).click();
+    const [dl] = await Promise.all([
+        page.waitForEvent('download'),
+        page.getByRole('button', { name: 'Export video' }).click()
+    ]);
+    const name = dl.suggestedFilename();
+    expect(name.endsWith('.webm')).toBeTruthy();
 });
 
 
