@@ -11,6 +11,7 @@ export default function MotionPanel(){
 	const setPrimaryVideo = useLabStore(s=>s.setPrimaryVideo)!;
 	const setSecondaryVideo = useLabStore(s=>s.setSecondaryVideo)!;
 	const setEffectId = useLabStore(s=>s.setEffectId);
+	const addClip = useLabStore(s=>s.addClip!);
 
 	async function animate(){
 		setLoading(true);
@@ -45,6 +46,8 @@ export default function MotionPanel(){
 		const setState = (useLabStore.setState as unknown) as (p: any) => void;
 		setState({ timeline: { keyframes: [ { t: 0.0, mix: 0 }, { t: 0.5, mix: 1 }, { t: 1.0, mix: 0 } ] } });
 		window.dispatchEvent(new Event('ace:scroll-timeline'));
+		// also record in clip list
+		addClip({ id: String(Date.now()), kind: 'video', src: videoUrl, durationSec: Number(seconds) || 2, name: 'Motion clip' });
 	}
 
 	return (
