@@ -33,6 +33,24 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 		return ()=> document.removeEventListener('mousedown', onDown);
 	}, [openPanel]);
 	useEffect(()=>{
+		if (!openPanel) return;
+		const el = popRef.current; if (!el) return;
+		// focus first focusable element inside popout
+		const focusables = el.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+		focusables[0]?.focus();
+		function trap(e: KeyboardEvent){
+			if (e.key === 'Escape') { setOpenPanel(null); return; }
+			if (e.key !== 'Tab') return;
+			const list = Array.from(focusables).filter(n=> !n.hasAttribute('disabled'));
+			if (list.length === 0) return;
+			const first = list[0]; const last = list[list.length - 1];
+			if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+			else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+		}
+		window.addEventListener('keydown', trap);
+		return ()=> window.removeEventListener('keydown', trap);
+	}, [openPanel]);
+	useEffect(()=>{
 		function onKey(e: KeyboardEvent){
 			const tag = (e.target as HTMLElement | null)?.tagName;
 			if (tag === 'INPUT' || tag === 'TEXTAREA') return;

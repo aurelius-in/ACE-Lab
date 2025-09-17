@@ -33,6 +33,7 @@ export default function SettingsPanel(){
 				<span className="text-black/70">Presets:</span>
 				<button className="btn-compact" onClick={()=>preset('1080p')}>1080p@24</button>
 				<button className="btn-compact" onClick={()=>preset('square')}>Square@30</button>
+				<button className="btn-compact" onClick={()=> setExportSize(1080, 1920)}>Vertical@30</button>
 			</div>
 			<div className="grid grid-cols-2 gap-3">
 				<label className="block text-sm">
