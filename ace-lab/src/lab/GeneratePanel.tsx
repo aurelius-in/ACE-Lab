@@ -16,6 +16,7 @@ export default function GeneratePanel(){
     const [thumb, setThumb] = useState<HTMLCanvasElement | null>(null);
     const setPrimary = useLabStore(s=>s.setPrimary);
     const [catalog, setCatalog] = useState<{ name: string; url: string }[]>([]);
+    const addClip = useLabStore(s=>s.addClip!);
 
     useEffect(()=>{
         const prefArg = pref === 'auto' ? undefined : pref;
@@ -39,6 +40,7 @@ export default function GeneratePanel(){
         }
     }
     function onSendToCanvas(){ if (thumb) { const url = thumb.toDataURL('image/png'); setPrimary(url); } }
+    function onSendToTimeline(){ if (thumb) { const url = thumb.toDataURL('image/png'); addClip({ id: String(Date.now()), kind: 'image', src: url, durationSec: 3, name: 'Generated' }); window.dispatchEvent(new Event('ace:scroll-timeline')); } }
 
     return (
         <div className="space-y-3">
@@ -70,6 +72,7 @@ export default function GeneratePanel(){
             {thumb && <div className="rounded border border-black/10 p-2 bg-white"><img src={thumb.toDataURL('image/png')} alt="thumb" className="max-w-full h-auto" /></div>}
             <div className="flex gap-2">
                 <button className="btn-primary" disabled={!thumb} onClick={onSendToCanvas}>Send to Canvas</button>
+                <button className="btn-compact" disabled={!thumb} onClick={onSendToTimeline}>Send to Timeline</button>
             </div>
         </div>
     );
