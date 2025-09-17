@@ -31,7 +31,7 @@ type LabState = {
 	presets: Preset[];
 	editCount: number;
 	text: { enabled: boolean; value: string; params: TextParams; font?: string };
-	exportSettings: { width?: number; height?: number; bitrateKbps?: number; audioUrl?: string };
+	exportSettings: { width?: number; height?: number; bitrateKbps?: number; audioUrl?: string; audioVolume?: number };
 	inpaint?: { enabled: boolean; regions: InpaintSelection[]; featherPx: number; invert: boolean };
 	briefPrompt: string;
 	qa?: { fps: number };
@@ -177,6 +177,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setBriefPrompt: (t) => set(() => ({ briefPrompt: t })),
 	setExportSize: (w, h) => set(() => ({ exportSettings: { ...get().exportSettings, width: w, height: h } })),
 	setExportAudioUrl: (u) => set(() => ({ exportSettings: { ...get().exportSettings, audioUrl: u } })),
+	setExportAudioVolume: (v: number) => set(() => ({ exportSettings: { ...get().exportSettings, audioVolume: Math.max(0, Math.min(1, v)) } })),
 	setPlayhead: (t) => set(() => ({ play: { ...get().play, t: Math.max(0, Math.min(1, t)) } })),
 	togglePlay: () => set(() => ({ play: { ...get().play, playing: !get().play.playing } })),
 	buildStylePack: () => { const s = get(); return { palette: ['#6E00FF', '#A83CF0', '#FF4BB5'], blocks: [s.effect.id], params: s.effect.params, timeline: s.timeline.keyframes }; },

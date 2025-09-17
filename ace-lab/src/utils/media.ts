@@ -94,7 +94,7 @@ export function downloadJson(filename: string, data: unknown){
 }
 
 type ClipIn = { id: string; kind: 'image'|'video'; src: string; durationSec: number; name?: string };
-type ExportClipsOpts = { width: number; height: number; fps?: number; bitrateKbps?: number; audioUrl?: string; onProgress?: (p:number)=>void; signal?: AbortSignal };
+type ExportClipsOpts = { width: number; height: number; fps?: number; bitrateKbps?: number; audioUrl?: string; audioVolume?: number; onProgress?: (p:number)=>void; signal?: AbortSignal };
 
 export async function exportClipsToWebm(clips: ClipIn[], opts: ExportClipsOpts): Promise<Blob> {
     const fps = opts.fps ?? 30;
@@ -108,6 +108,7 @@ export async function exportClipsToWebm(clips: ClipIn[], opts: ExportClipsOpts):
         if (opts.audioUrl) {
             audioEl = document.createElement('audio');
             audioEl.src = opts.audioUrl; audioEl.crossOrigin = 'anonymous'; (audioEl as any).playsInline = true; audioEl.loop = true; await audioEl.play().catch(()=>{});
+            if (typeof opts.audioVolume === 'number') audioEl.volume = Math.max(0, Math.min(1, opts.audioVolume));
             const astream = (audioEl as any).captureStream ? (audioEl as any).captureStream() : null;
             if (astream) {
                 combined = new MediaStream([ ...(videoStream.getVideoTracks()), ...(astream.getAudioTracks()) ]);

@@ -135,7 +135,7 @@ export default function TimelinePanel() {
                         const { exportClipsToWebm } = await import('../utils/media');
                         const width = s.exportSettings.width || 1280;
                         const height = s.exportSettings.height || 720;
-                        const blob = await exportClipsToWebm(s.clips||[], { width, height, fps: 30, bitrateKbps: s.exportSettings.bitrateKbps || 6000, onProgress: ()=>{} });
+                        const blob = await exportClipsToWebm(s.clips||[], { width, height, fps: 30, bitrateKbps: s.exportSettings.bitrateKbps || 6000, audioUrl: s.exportSettings.audioUrl, audioVolume: s.exportSettings.audioVolume, onProgress: ()=>{} });
                         const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'timeline.webm'; a.click(); URL.revokeObjectURL(url);
                     })();
                 }}>Export Timeline</button>
