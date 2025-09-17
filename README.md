@@ -150,10 +150,20 @@ npm run dev:server
 - Comprehensive accessibility support and full keyboard control of sliders.
 - Expanded built‑in preset packs with thumbnail previews.
 
-## Policy WASM build (optional)
+## Core pillars (image & video generation)
 
-Compile Rego to WASM (requires OPA CLI) and place it at `public/policy/policy.wasm`:
+- **Image generation (WebGPU/WASM)**
+  - Browser‑native thumbnail generation via ONNX Runtime Web. Accepts a model URL (or local catalog entry), shows device/provider (WebGPU/WASM) and timing, and supports one‑click “Send to Canvas” into the shader pipeline.
+  - Local models: put `.onnx` files under `ace-lab/public/models/` and list them in `ace-lab/public/models/models.json` for quick selection.
 
-```
-opa build -t wasm -e ace/policy/allow -o public/policy/policy.wasm src/policy/rules.rego
-```
+- **Generative Fill (inpaint)**
+  - Box‑select a region on the canvas, the app crops a minimal patch + mask, calls a FastAPI inpaint microservice (SDXL‑Turbo), and composites the patch back into the image.
+
+- **Motion generation**
+  - AnimateDiff (short 2–4s loops) and RIFE frame interpolation (2×/3×). Preview results and “Send to Canvas/Timeline” to apply transitions and effects. Timeline auto‑scrolls when clips are inserted.
+
+- **Style transfer (TF.js)**
+  - Fast on‑device styles (Mosaic/Udnie/Candy…) with a strength slider; results continue through Halftone/VHS/Post shaders for final look‑dev.
+
+- **Export & policy**
+  - WebM and GIF export with bitrate control. Policy hooks in place for pre‑export checks and one‑click auto‑fix.
