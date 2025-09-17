@@ -93,4 +93,66 @@ export function downloadJson(filename: string, data: unknown){
 	const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
 }
 
+type ClipIn = { id: string; kind: 'image'|'video'; src: string; durationSec: number; name?: string };
+type ExportClipsOpts = { width: number; height: number; fps?: number; bitrateKbps?: number; audioUrl?: string; onProgress?: (p:number)=>void; signal?: AbortSignal };
+
+export async function exportClipsToWebm(clips: ClipIn[], opts: ExportClipsOpts): Promise<Blob> {
+    const fps = opts.fps ?? 30;
+    const off = document.createElement('canvas'); off.width = opts.width; off.height = opts.height;
+    const ctx = off.getContext('2d')!;
+    const videoStream = (off as any).captureStream ? (off as any).captureStream(fps) : null;
+    if (!videoStream) throw new Error('captureStream not supported');
+    let combined: MediaStream = videoStream;
+    let audioEl: HTMLAudioElement | null = null;
+    try {
+        if (opts.audioUrl) {
+            audioEl = document.createElement('audio');
+            audioEl.src = opts.audioUrl; audioEl.crossOrigin = 'anonymous'; (audioEl as any).playsInline = true; audioEl.loop = true; await audioEl.play().catch(()=>{});
+            const astream = (audioEl as any).captureStream ? (audioEl as any).captureStream() : null;
+            if (astream) {
+                combined = new MediaStream([ ...(videoStream.getVideoTracks()), ...(astream.getAudioTracks()) ]);
+            }
+        }
+    } catch {}
+    const recorder = new MediaRecorder(combined, { mimeType: 'video/webm;codecs=vp9', bitsPerSecond: opts.bitrateKbps ? opts.bitrateKbps * 1000 : undefined } as any);
+    const chunks: Blob[] = [];
+    recorder.ondataavailable = (e) => chunks.push(e.data);
+    recorder.start();
+    let aborted = false;
+    const stop = () => { if (!aborted) { aborted = true; try { recorder.stop(); } catch {} } };
+    if (opts.signal) { opts.signal.addEventListener('abort', stop, { once: true }); }
+    const totalFrames = clips.reduce((sum,c)=> sum + Math.max(1, Math.floor(c.durationSec * fps)), 0);
+    let written = 0;
+    for (const clip of clips) {
+        if (aborted) break;
+        if (clip.kind === 'image') {
+            const img = await loadImage(clip.src);
+            const frames = Math.max(1, Math.floor(clip.durationSec * fps));
+            for (let i=0;i<frames && !aborted;i++){
+                ctx.clearRect(0,0,off.width, off.height);
+                ctx.drawImage(img, 0, 0, off.width, off.height);
+                written++; if (opts.onProgress) opts.onProgress(Math.min(1, written/totalFrames));
+                await new Promise(r=>requestAnimationFrame(r));
+            }
+        } else {
+            const v = document.createElement('video'); v.src = clip.src; v.crossOrigin = 'anonymous'; v.loop = true; v.muted = true; (v as any).playsInline = true; await v.play().catch(()=>{});
+            await new Promise(r=> v.addEventListener('canplay', ()=> r(null), { once: true }));
+            const endAt = performance.now() + clip.durationSec * 1000;
+            while (performance.now() < endAt && !aborted) {
+                if (v.readyState >= 2) {
+                    ctx.clearRect(0,0,off.width, off.height);
+                    ctx.drawImage(v, 0, 0, off.width, off.height);
+                }
+                written++; if (opts.onProgress) opts.onProgress(Math.min(1, written/totalFrames));
+                await new Promise(r=>requestAnimationFrame(r));
+            }
+            try { v.pause(); } catch {}
+        }
+    }
+    stop();
+    await new Promise((r) => (recorder.onstop = () => r(null)));
+    try { if (audioEl) { audioEl.pause(); audioEl.removeAttribute('src'); audioEl.load(); } } catch {}
+    return new Blob(chunks, { type: 'video/webm' });
+}
+
 

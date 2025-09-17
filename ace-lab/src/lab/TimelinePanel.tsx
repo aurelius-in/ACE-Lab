@@ -11,7 +11,7 @@ function ease(t: number, mode: 'linear'|'easeIn'|'easeOut'|'easeInOut'){
 export default function TimelinePanel() {
 	const keyframes = useLabStore(s => s.timeline.keyframes);
 	const setTimeline = useLabStore.setState as (partial: any) => void;
-	const clips = useLabStore(s => s.clips || []);
+    const clips = useLabStore(s => s.clips || []);
 	const addClip = useLabStore(s => s.addClip!);
 	const removeClip = useLabStore(s => s.removeClip!);
 	const reorderClips = useLabStore(s => s.reorderClips!);
@@ -97,7 +97,7 @@ export default function TimelinePanel() {
 			{/* Clips row */}
 			<div className="card-dark p-2 mt-2">
 				<div className="flex items-center justify-between mb-2">
-					<div className="text-sm text-white/80">Clips</div>
+                    <div className="text-sm text-white/80">Clips</div>
 					<div className="flex items-center gap-2">
 						<button className="btn-compact" onClick={()=> addClip({ id: String(Date.now()), kind: 'image', src: '/white.webp', durationSec: 3, name: 'Still' })}>Add still</button>
 						<button className="btn-compact" onClick={()=> addClip({ id: String(Date.now()+1), kind: 'video', src: '/head_loop.webp', durationSec: 3, name: 'Clip' })}>Add clip</button>
@@ -107,7 +107,7 @@ export default function TimelinePanel() {
 					<div className="text-white/60 text-sm">No clips yet.</div>
 				) : (
 					<div className="space-y-2">
-						{clips.map((c, idx) => (
+                        {clips.map((c, idx) => (
 							<div key={c.id} className="flex items-center gap-2 bg-black/30 rounded p-2">
 								<div className="w-12 h-8 bg-white/10 rounded" aria-label="thumbnail" />
 								<div className="flex-1">
@@ -128,6 +128,18 @@ export default function TimelinePanel() {
 					</div>
 				)}
 			</div>
+            <div className="mt-2 flex justify-end">
+                <button className="btn-compact" aria-label="Export timeline" title="Export timeline" onClick={()=>{
+                    (async () => {
+                        const s = useLabStore.getState();
+                        const { exportClipsToWebm } = await import('../utils/media');
+                        const width = s.exportSettings.width || 1280;
+                        const height = s.exportSettings.height || 720;
+                        const blob = await exportClipsToWebm(s.clips||[], { width, height, fps: 30, bitrateKbps: s.exportSettings.bitrateKbps || 6000, onProgress: ()=>{} });
+                        const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'timeline.webm'; a.click(); URL.revokeObjectURL(url);
+                    })();
+                }}>Export Timeline</button>
+            </div>
 			<div ref={barRef} className="relative h-20 card-dark p-2 overflow-hidden" onMouseDown={onBarClick}>
 				{/* grid */}
 				<div className="absolute inset-0">
