@@ -37,3 +37,14 @@ test('open Generative Fill panel and see controls', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Select Area' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Fill', exact: true })).toBeVisible();
 });
+
+test('export flow after generate', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Generate (WebGPU)' }).click();
+    await page.getByRole('button', { name: 'Use demo model' }).click();
+    await page.getByPlaceholder('Prompt').fill('retro neon skyline');
+    await page.getByRole('button', { name: 'Generate', exact: true }).click();
+    await expect(page.locator('img[alt="thumb"]')).toBeVisible();
+    await page.getByRole('button', { name: 'Send to Canvas' }).click();
+    await page.getByRole('button', { name: 'Export video' }).click();
+});

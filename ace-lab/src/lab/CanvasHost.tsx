@@ -32,6 +32,9 @@ export default function CanvasHost() {
 		const canvas = canvasRef.current; if (!canvas) return;
 		const gl = canvas.getContext('webgl2'); if (!gl) return;
 		const c = canvas;
+		const cleanupFns: Array<() => void> = [];
+		const videoEls: HTMLVideoElement[] = [];
+		const rafIds: number[] = [];
 
 		const compile = (g: WebGL2RenderingContext, type: number, src: string) => { const sh = g.createShader(type)!; g.shaderSource(sh, src); g.compileShader(sh); if (!g.getShaderParameter(sh, g.COMPILE_STATUS)) { console.error(g.getShaderInfoLog(sh)); } return sh; };
 		const program = (g: WebGL2RenderingContext, fsSrc: string) => { const vs = compile(g, g.VERTEX_SHADER, VERT_SRC as string); const fs = compile(g, g.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${fsSrc}`); const p = g.createProgram()!; g.attachShader(p, vs); g.attachShader(p, fs); g.linkProgram(p); return p; };
@@ -66,12 +69,16 @@ export default function CanvasHost() {
 		const uploadVideo = (g: WebGL2RenderingContext, url: string, to: WebGLTexture) => {
 			const v = document.createElement('video');
 			v.src = url; v.muted = true; (v as any).playsInline = true; v.loop = true; v.autoplay = true; v.crossOrigin = 'anonymous';
+			videoEls.push(v);
 			v.addEventListener('loadeddata', ()=>{
 				g.bindTexture(g.TEXTURE_2D, to);
 				g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,v);
 			});
-			const update = () => { if (v.readyState >= 2) { g.bindTexture(g.TEXTURE_2D, to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,v); } requestAnimationFrame(update); };
+			let rid = 0;
+			const update = () => { if (v.readyState >= 2) { g.bindTexture(g.TEXTURE_2D, to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,v); } rid = requestAnimationFrame(update); };
 			update();
+			rafIds.push(rid);
+			cleanupFns.push(() => { if (rid) cancelAnimationFrame(rid); v.pause(); v.removeAttribute('src'); try { v.load(); } catch {} });
 		};
 		if (media.primary) { if (media.primary.kind==='video') uploadVideo(gl, media.primary.src, tex0); else uploadImage(gl, media.primary.src, tex0); } else { uploadImage(gl, '/white.png', texIntro); }
 		if (media.secondary) { if (media.secondary.kind==='video') uploadVideo(gl, media.secondary.src, tex1); else uploadImage(gl, media.secondary.src, tex1); }
@@ -79,8 +86,10 @@ export default function CanvasHost() {
 		// Intro videos setup (only used when no media loaded)
 		const introVhs = document.createElement('video');
 		introVhs.src = '/head_loop_vhs.mp4'; introVhs.muted = true; (introVhs as any).playsInline = true; introVhs.loop = true; introVhs.autoplay = true; introVhs.preload = 'auto'; introVhs.crossOrigin = 'anonymous';
+		videoEls.push(introVhs);
 		const introHead = document.createElement('video');
 		introHead.src = '/head_loop.mp4'; introHead.muted = true; (introHead as any).playsInline = true; introHead.loop = true; introHead.autoplay = true; introHead.preload = 'auto'; introHead.crossOrigin = 'anonymous';
+		videoEls.push(introHead);
 		function startIntro(){ introVhs.play().catch(()=>{}); introHead.play().catch(()=>{}); }
 		introVhs.addEventListener('canplay', ()=> introVhs.play().catch(()=>{}));
 		introHead.addEventListener('canplay', ()=> introHead.play().catch(()=>{}));
@@ -211,7 +220,23 @@ export default function CanvasHost() {
 
 		function vis(){ running = document.visibilityState === 'visible'; }
 		document.addEventListener('visibilitychange', vis);
-		return () => { cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', vis); window.removeEventListener('ace:splash-hidden', onSplashHidden as any); };
+		return () => {
+			cancelAnimationFrame(raf);
+			document.removeEventListener('visibilitychange', vis);
+			window.removeEventListener('ace:splash-hidden', onSplashHidden as any);
+			document.removeEventListener('click', startIntro as any);
+			// stop videos and cancel per-video RAFs
+			for (const fn of cleanupFns) { try { fn(); } catch {} }
+			// delete GL resources
+			try {
+				gl.deleteTexture(tex0); gl.deleteTexture(tex1); gl.deleteTexture(textTex); gl.deleteTexture(texIntro);
+				gl.deleteTexture(rtTex); gl.deleteTexture(ping); gl.deleteTexture(pong);
+				if (lutTex) gl.deleteTexture(lutTex);
+				gl.deleteFramebuffer(fbo); gl.deleteFramebuffer(fbo2);
+				gl.deleteBuffer(vbo); gl.deleteVertexArray(vao);
+				gl.deleteProgram(normalProg); gl.deleteProgram(whiteProg); gl.deleteProgram(blitProg); gl.deleteProgram(textProg); gl.deleteProgram(blurProg); gl.deleteProgram(postProg);
+			} catch {}
+		};
 	}, [media.primary?.src, media.secondary?.src, effect.id, effect.params, publishFps, timeline.keyframes, fps, text.enabled, text.value, text.params, play.playing, play.t, setPlayhead]);
 
 	return (

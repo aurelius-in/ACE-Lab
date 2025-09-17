@@ -57,7 +57,7 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 						</div>
 					</div>
 					<nav className="strip-group" role="tablist" aria-label="Main sections">
-						<button className="btn-strip" onClick={()=>{ if (onEnhance) onEnhance(); else runAgent('ArchitectAgent'); }}>Enhance</button>
+					<button className="btn-strip" aria-label="Enhance image or video" title="Enhance image or video" onClick={()=>{ if (onEnhance) onEnhance(); else runAgent('ArchitectAgent'); }}>Enhance</button>
 						{tabs.map(t => (
 							<button key={t} role="tab" aria-selected={activeTab===t} className={clsx('btn-strip', activeTab===t ? '' : '')} onClick={() => {
 								if (t === 'Agents') { setOpenPanel(p=> p==='Agents'? null : 'Agents'); return; }
@@ -67,12 +67,12 @@ export function AppShell({ children, rightSlot, onExport, onRecord3, onRecord6, 
 								{t}
 							</button>
 						))}
-						{POPOUT_BUTTONS.map(name => (
-							<button key={name} className="btn-strip" onClick={()=> setOpenPanel(name)}>{name}</button>
-						))}
+					{POPOUT_BUTTONS.map(name => (
+						<button key={name} className="btn-strip" aria-label={`Open ${name} panel`} title={name} onClick={()=> setOpenPanel(name)}>{name}</button>
+					))}
 					</nav>
 					<div className="strip-group">
-						<button className="btn-strip" aria-label="Export video" onClick={onExport}>Export</button>
+					<button className="btn-strip" aria-label="Export video" title="Export video" onClick={onExport}>Export</button>
 						<RecordControls onRecord3={onRecord3} onRecord6={onRecord6} strip />
 					</div>
 				</div>
