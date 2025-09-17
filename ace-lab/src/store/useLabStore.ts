@@ -59,6 +59,8 @@ type LabState = {
 	setBriefPrompt: (t: string) => void;
 	setExportSize: (w?: number, h?: number) => void;
 	setExportAudioUrl?: (u?: string) => void;
+	setExportBitrate?: (kbps: number) => void;
+	setExportAudioVolume?: (v: number) => void;
 	setPlayhead: (t: number) => void;
 	togglePlay: () => void;
 	buildStylePack: () => StylePack;
@@ -77,6 +79,9 @@ type LabState = {
 	removeClip?: (id: string) => void;
 	reorderClips?: (fromIdx: number, toIdx: number) => void;
 	setClipDuration?: (id: string, durationSec: number) => void;
+    setTimelineKeyframes?: (keys: { t: number; mix: number }[]) => void;
+    setPresets?: (list: Preset[]) => void;
+    setEffectParams?: (params: Record<string, number>) => void;
 	clearAgentLog?: () => void;
 	clearAgentTraces?: () => void;
 	addLutFavorite?: (url: string) => void;
@@ -181,6 +186,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setExportSize: (w, h) => set(() => ({ exportSettings: { ...get().exportSettings, width: w, height: h } })),
 	setExportAudioUrl: (u) => set(() => ({ exportSettings: { ...get().exportSettings, audioUrl: u } })),
 	setExportAudioVolume: (v: number) => set(() => ({ exportSettings: { ...get().exportSettings, audioVolume: Math.max(0, Math.min(1, v)) } })),
+	setExportBitrate: (kbps) => set(() => ({ exportSettings: { ...get().exportSettings, bitrateKbps: kbps } })),
 	setPlayhead: (t) => set(() => ({ play: { ...get().play, t: Math.max(0, Math.min(1, t)) } })),
 	togglePlay: () => set(() => ({ play: { ...get().play, playing: !get().play.playing } })),
 	buildStylePack: () => { const s = get(); return { palette: ['#6E00FF', '#A83CF0', '#FF4BB5'], blocks: [s.effect.id], params: s.effect.params, timeline: s.timeline.keyframes }; },
@@ -200,6 +206,9 @@ export const useLabStore = create<LabState>((set, get) => ({
 		const arr = [ ...(s.clips||[]) ]; const [item] = arr.splice(fromIdx,1); if (!item) return {} as any; arr.splice(toIdx,0,item); return { clips: arr } as any;
 	}),
 	setClipDuration: (id, durationSec) => set((s)=> ({ clips: (s.clips||[]).map(c=> c.id===id ? { ...c, durationSec } : c) })),
+	setTimelineKeyframes: (keys) => set(() => ({ timeline: { keyframes: keys } })),
+	setPresets: (list) => set(() => ({ presets: list })),
+	setEffectParams: (params) => set((s)=> ({ effect: { ...s.effect, params } })),
 	clearAgentLog: () => set(() => ({ agentLog: [] })),
 	clearAgentTraces: () => set(() => ({ agentTraces: [] })),
 	addLutFavorite: (url: string) => set((s)=> ({ assets: { ...(s.assets||{}), lutSrc: s.assets?.lutSrc, lutFavorites: Array.from(new Set([...(s.assets?.lutFavorites||[]), url])) } })),

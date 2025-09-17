@@ -42,8 +42,8 @@ export default function MotionPanel(){
 		if (!videoUrl) return;
 		setSecondaryVideo(videoUrl);
 		setEffectId('crosszoom');
-		const setState = (useLabStore.setState as unknown) as (p: any) => void;
-		setState({ timeline: { keyframes: [ { t: 0.0, mix: 0 }, { t: 0.5, mix: 1 }, { t: 1.0, mix: 0 } ] } });
+const setTimelineKeys = useLabStore(s => s.setTimelineKeyframes!);
+setTimelineKeys([ { t: 0.0, mix: 0 }, { t: 0.5, mix: 1 }, { t: 1.0, mix: 0 } ]);
 		window.dispatchEvent(new Event('ace:scroll-timeline'));
 		// also record in clip list
 		addClip({ id: String(Date.now()), kind: 'video', src: videoUrl, durationSec: Number(seconds) || 2, name: 'Motion clip' });
