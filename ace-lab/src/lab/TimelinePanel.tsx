@@ -11,6 +11,11 @@ function ease(t: number, mode: 'linear'|'easeIn'|'easeOut'|'easeInOut'){
 export default function TimelinePanel() {
 	const keyframes = useLabStore(s => s.timeline.keyframes);
 	const setTimeline = useLabStore.setState as (partial: any) => void;
+	const clips = useLabStore(s => s.clips || []);
+	const addClip = useLabStore(s => s.addClip!);
+	const removeClip = useLabStore(s => s.removeClip!);
+	const reorderClips = useLabStore(s => s.reorderClips!);
+	const setClipDuration = useLabStore(s => s.setClipDuration!);
 	const play = useLabStore(s => s.play);
 	const setPlayhead = useLabStore(s => s.setPlayhead);
 	const togglePlay = useLabStore(s => s.togglePlay);
@@ -88,6 +93,40 @@ export default function TimelinePanel() {
 					<button className="btn-primary" onClick={togglePlay}>{play.playing ? 'Pause' : 'Play'}</button>
 					<input type="range" min={0} max={1} step={0.001} value={play.t} onChange={(e)=>setPlayhead(Number(e.target.value))} className="w-48" />
 				</div>
+			</div>
+			{/* Clips row */}
+			<div className="card-dark p-2 mt-2">
+				<div className="flex items-center justify-between mb-2">
+					<div className="text-sm text-white/80">Clips</div>
+					<div className="flex items-center gap-2">
+						<button className="btn-compact" onClick={()=> addClip({ id: String(Date.now()), kind: 'image', src: '/white.webp', durationSec: 3, name: 'Still' })}>Add still</button>
+						<button className="btn-compact" onClick={()=> addClip({ id: String(Date.now()+1), kind: 'video', src: '/head_loop.webp', durationSec: 3, name: 'Clip' })}>Add clip</button>
+					</div>
+				</div>
+				{clips.length === 0 ? (
+					<div className="text-white/60 text-sm">No clips yet.</div>
+				) : (
+					<div className="space-y-2">
+						{clips.map((c, idx) => (
+							<div key={c.id} className="flex items-center gap-2 bg-black/30 rounded p-2">
+								<div className="w-12 h-8 bg-white/10 rounded" aria-label="thumbnail" />
+								<div className="flex-1">
+									<div className="text-xs text-white/80">{c.name || c.kind}</div>
+									<div className="text-[10px] text-white/50 break-all">{c.src}</div>
+								</div>
+								<label className="text-[10px] text-white/70 flex items-center gap-1">
+									<span>sec</span>
+									<input aria-label="clip duration" className="w-16 input" type="number" min={1} max={30} value={c.durationSec} onChange={(e)=> setClipDuration(c.id, Math.max(1, Math.min(30, Number(e.target.value)||1)))} />
+								</label>
+								<div className="flex items-center gap-1">
+									<button aria-label="move up" className="btn-compact" disabled={idx===0} onClick={()=> reorderClips(idx, idx-1)}>↑</button>
+									<button aria-label="move down" className="btn-compact" disabled={idx===clips.length-1} onClick={()=> reorderClips(idx, idx+1)}>↓</button>
+									<button aria-label="remove clip" className="btn-compact" onClick={()=> removeClip(c.id)}>Remove</button>
+								</div>
+							</div>
+						))}
+					</div>
+				)}
 			</div>
 			<div ref={barRef} className="relative h-20 card-dark p-2 overflow-hidden" onMouseDown={onBarClick}>
 				{/* grid */}

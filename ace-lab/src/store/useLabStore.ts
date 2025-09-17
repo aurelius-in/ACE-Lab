@@ -15,8 +15,11 @@ export type StylePack = {
 
 type TextParams = { amp: number; freq: number; speed: number; outlinePx: number };
 
+type Clip = { id: string; kind: 'image'|'video'; src: string; durationSec: number; name?: string };
+
 type LabState = {
 	media: { primary?: TexSource; secondary?: TexSource };
+	clips?: Clip[];
 	effect: { id: string; params: Record<string, number>; mix: number };
 	assets?: { lutSrc?: string; lutFavorites?: string[] };
 	timeline: { keyframes: { t: number; mix: number }[] };
@@ -62,6 +65,11 @@ type LabState = {
 	setLutSrc?: (src?: string) => void;
 	showToast?: (message: string) => void;
 	setTimelineEasing?: (e: 'linear'|'easeIn'|'easeOut'|'easeInOut') => void;
+	// clips
+	addClip?: (c: Clip) => void;
+	removeClip?: (id: string) => void;
+	reorderClips?: (fromIdx: number, toIdx: number) => void;
+	setClipDuration?: (id: string, durationSec: number) => void;
 	clearAgentLog?: () => void;
 	clearAgentTraces?: () => void;
 	addLutFavorite?: (url: string) => void;
@@ -69,7 +77,7 @@ type LabState = {
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
-	media: {}, assets: {},
+	media: {}, assets: {}, clips: [],
 	effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0, bloomStrength: 0.25, lutAmount: 0.2, bloomThreshold: 0.7, grainAmount: 0.05, vignette01: 1 }, mix: 0 },
 	timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] },
 	play: { t: 0, playing: true },
@@ -166,6 +174,12 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setLutSrc: (src) => set((s) => ({ assets: { ...(s.assets ?? {}), lutSrc: src, lutFavorites: s.assets?.lutFavorites } })),
 	showToast: (message: string) => { set({ toast: { message, t: Date.now() } }); setTimeout(() => { const cur = get().toast; if (cur && Date.now() - cur.t >= 1800) { set({ toast: undefined }); } }, 2000); },
 	setTimelineEasing: (e) => set(() => ({ timelineEasing: e })),
+	addClip: (c) => set((s)=> ({ clips: [ ...(s.clips||[]), c ] })),
+	removeClip: (id) => set((s)=> ({ clips: (s.clips||[]).filter(c=>c.id!==id) })),
+	reorderClips: (fromIdx, toIdx) => set((s)=>{
+		const arr = [ ...(s.clips||[]) ]; const [item] = arr.splice(fromIdx,1); if (!item) return {} as any; arr.splice(toIdx,0,item); return { clips: arr } as any;
+	}),
+	setClipDuration: (id, durationSec) => set((s)=> ({ clips: (s.clips||[]).map(c=> c.id===id ? { ...c, durationSec } : c) })),
 	clearAgentLog: () => set(() => ({ agentLog: [] })),
 	clearAgentTraces: () => set(() => ({ agentTraces: [] })),
 	addLutFavorite: (url: string) => set((s)=> ({ assets: { ...(s.assets||{}), lutSrc: s.assets?.lutSrc, lutFavorites: Array.from(new Set([...(s.assets?.lutFavorites||[]), url])) } })),
