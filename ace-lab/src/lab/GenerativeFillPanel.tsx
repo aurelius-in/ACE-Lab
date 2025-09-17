@@ -50,11 +50,11 @@ export default function GenerativeFillPanel(){
         <div className="space-y-3">
             <div className="text-sm text-black/70">Paint a rectangle to inpaint</div>
             <div className="flex gap-2 items-center">
-                <input className="flex-1 input" value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Prompt" />
-                <button className="btn-compact" onClick={startSelect}>Select Area</button>
-                <button className="btn-compact" disabled={!box} onClick={runFill}>Fill</button>
+                <input className="flex-1 input" aria-label="Prompt" title="Prompt" value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Prompt" />
+                <button className="btn-compact" aria-label="Select Area" title="Select Area" onClick={startSelect}>Select Area</button>
+                <button className="btn-compact" aria-label="Fill" title="Fill" disabled={!box} onClick={runFill}>Fill</button>
             </div>
-            <div ref={overlayRef} className="relative rounded border border-black/10 bg-white/80 text-black p-2 select-none"
+            <div ref={overlayRef} className="relative rounded border border-black/10 bg-white/80 text-black p-2 select-none" aria-label="Selection overlay" role="region" title="Selection overlay"
                  onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp}
                  style={{ width: 480, height: 270 }}>
                 <div className="absolute inset-0 grid place-items-center text-xs text-black/60">Click and drag to select</div>

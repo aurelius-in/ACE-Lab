@@ -20,15 +20,15 @@ export default function StyleTransferPanel(){
     return (
         <div className="space-y-3">
             <div className="flex gap-2 items-center">
-                <select className="input" value={style} onChange={e=>setStyle(e.target.value as ST.StyleId)}>
+                <select className="input" aria-label="Style" title="Style" value={style} onChange={e=>setStyle(e.target.value as ST.StyleId)}>
                     <option value="mosaic">Mosaic</option>
                     <option value="udnie">Udnie</option>
                     <option value="candy">Candy</option>
                     <option value="scream">Scream</option>
                     <option value="rain_princess">Rain Princess</option>
                 </select>
-                <input type="range" min={0} max={1} step={0.05} value={strength} onChange={e=>setStrength(parseFloat(e.target.value))} />
-                <button className="btn-compact" onClick={apply} disabled={working}>{working ? 'Applying…' : 'Apply'}</button>
+                <input type="range" aria-label="Strength" title="Strength" min={0} max={1} step={0.05} value={strength} onChange={e=>setStrength(parseFloat(e.target.value))} />
+                <button className="btn-compact" aria-label="Apply" title="Apply" onClick={apply} disabled={working}>{working ? 'Applying…' : 'Apply'}</button>
             </div>
             <div className="text-xs text-black/60">Applies non-destructive style; you can still tweak shader effects afterward.</div>
         </div>
