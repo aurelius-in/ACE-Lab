@@ -33,21 +33,28 @@ export default function PresetsPanel(){
 
 	const grouped = builtin.reduce((acc, b) => { const c = categoryOf(b); (acc[c] ||= []).push(b); return acc; }, {} as Record<string, Builtin[]>);
 
-	async function refreshFromServer(){
-		try { const r = await fetch('http://localhost:4000/presets'); const j = await r.json(); setState({ presets: j }); showToast?.('Loaded presets from server'); } catch {}
+async function refreshFromServer(){
+	try {
+		const r = await fetch('http://localhost:4000/presets'); if (!r.ok) throw new Error('load failed'); const j = await r.json(); setState({ presets: j }); showToast?.('Loaded presets from server');
+	} catch {
+		showToast?.('Failed to load presets');
 	}
-	async function pushToServer(preset: { id: string; name: string; params: Record<string, number>; thumb?: string }){
-		try {
-			const t = localStorage.getItem('ace-token');
-			await fetch('http://localhost:4000/presets', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify(preset) });
-			showToast?.('Synced to server');
-		} catch {}
+}
+async function pushToServer(preset: { id: string; name: string; params: Record<string, number>; thumb?: string }){
+	try {
+		const t = localStorage.getItem('ace-token');
+		const res = await fetch('http://localhost:4000/presets', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify(preset) });
+		if (!res.ok) throw new Error('sync failed');
+		showToast?.('Synced to server');
+	} catch {
+		showToast?.('Failed to sync to server');
 	}
+}
 
 	function onExport(){
 		downloadJson('ace-presets.json', presets);
 	}
-	async function onImport(ev: React.ChangeEvent<HTMLInputElement>){
+    async function onImport(ev: React.ChangeEvent<HTMLInputElement>){
 		const f = ev.target.files?.[0]; if (!f) return;
 		try {
 			const txt = await f.text();
@@ -55,7 +62,7 @@ export default function PresetsPanel(){
 			if (!Array.isArray(data)) throw new Error('Invalid');
 			const cleaned = data.filter((p: any)=> p && typeof p.id==='string' && typeof p.name==='string' && typeof p.params==='object');
 			setState({ presets: cleaned });
-		} catch {}
+		} catch { showToast?.('Invalid preset file'); }
 		finally { if (fileRef.current) fileRef.current.value = ''; }
 	}
 	async function saveCurrent(){
