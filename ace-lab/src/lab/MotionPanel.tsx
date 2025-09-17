@@ -53,25 +53,25 @@ export default function MotionPanel(){
 	return (
 		<div className="space-y-3">
 			<div className="flex gap-2 items-center">
-				<input className="flex-1 input" value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Prompt" />
-				<select className="input" value={seconds} onChange={e=>setSeconds(Number(e.target.value) as 2|4)}>
+				<input className="flex-1 input" aria-label="Prompt" title="Prompt" value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Prompt" />
+				<select className="input" aria-label="Seconds" title="Seconds" value={seconds} onChange={e=>setSeconds(Number(e.target.value) as 2|4)}>
 					<option value={2}>2s</option>
 					<option value={4}>4s</option>
 				</select>
-				<select className="input" value={fps} onChange={e=>setFps(Number(e.target.value) as 12|24)}>
+				<select className="input" aria-label="FPS" title="FPS" value={fps} onChange={e=>setFps(Number(e.target.value) as 12|24)}>
 					<option value={12}>12 fps</option>
 					<option value={24}>24 fps</option>
 				</select>
-				<button className="btn-compact" onClick={animate} disabled={loading}>{loading ? 'Working…' : 'Animate'}</button>
+				<button className="btn-compact" aria-label="Animate" title="Animate" onClick={animate} disabled={loading}>{loading ? 'Working…' : 'Animate'}</button>
 			</div>
 			{videoUrl && (
 				<div className="space-y-2">
-					<video src={videoUrl} controls className="w-full rounded" />
+					<video src={videoUrl} controls className="w-full rounded" aria-label="Preview" />
 					<div className="flex gap-2">
-						<button className="btn-compact" onClick={()=>interpolate(2)} disabled={loading}>RIFE 2×</button>
-						<button className="btn-compact" onClick={()=>interpolate(3)} disabled={loading}>RIFE 3×</button>
-						<button className="btn-primary" onClick={sendToCanvas}>Send to Canvas</button>
-						<button className="btn-compact" onClick={sendToTimeline}>Send to Timeline</button>
+						<button className="btn-compact" aria-label="RIFE 2x" title="RIFE 2x" onClick={()=>interpolate(2)} disabled={loading}>RIFE 2×</button>
+						<button className="btn-compact" aria-label="RIFE 3x" title="RIFE 3x" onClick={()=>interpolate(3)} disabled={loading}>RIFE 3×</button>
+						<button className="btn-primary" aria-label="Send to Canvas" title="Send to Canvas" onClick={sendToCanvas}>Send to Canvas</button>
+						<button className="btn-compact" aria-label="Send to Timeline" title="Send to Timeline" onClick={sendToTimeline}>Send to Timeline</button>
 					</div>
 				</div>
 			)}
