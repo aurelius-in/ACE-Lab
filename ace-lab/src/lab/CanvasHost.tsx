@@ -74,8 +74,8 @@ export default function CanvasHost() {
 				g.bindTexture(g.TEXTURE_2D, to);
 				g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,v);
 			});
-			let rid = 0;
-			const update = () => { if (v.readyState >= 2) { g.bindTexture(g.TEXTURE_2D, to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,v); } rid = requestAnimationFrame(update); };
+			let rid = 0; let lastUpdate = 0;
+			const update = () => { const now = performance.now(); if (now - lastUpdate > 33 && v.readyState >= 2) { lastUpdate = now; g.bindTexture(g.TEXTURE_2D, to); g.texImage2D(g.TEXTURE_2D,0,g.RGBA,g.RGBA,g.UNSIGNED_BYTE,v); } rid = requestAnimationFrame(update); };
 			update();
 			rafIds.push(rid);
 			cleanupFns.push(() => { if (rid) cancelAnimationFrame(rid); v.pause(); v.removeAttribute('src'); try { v.load(); } catch {} });

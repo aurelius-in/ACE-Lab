@@ -17,6 +17,8 @@ type TextParams = { amp: number; freq: number; speed: number; outlinePx: number 
 
 type Clip = { id: string; kind: 'image'|'video'; src: string; durationSec: number; name?: string };
 
+type InpaintSelection = { x: number; y: number; w: number; h: number };
+
 type LabState = {
 	media: { primary?: TexSource; secondary?: TexSource };
 	clips?: Clip[];
@@ -29,7 +31,8 @@ type LabState = {
 	presets: Preset[];
 	editCount: number;
 	text: { enabled: boolean; value: string; params: TextParams; font?: string };
-	exportSettings: { width?: number; height?: number; bitrateKbps?: number };
+	exportSettings: { width?: number; height?: number; bitrateKbps?: number; audioUrl?: string };
+	inpaint?: { enabled: boolean; regions: InpaintSelection[]; featherPx: number; invert: boolean };
 	briefPrompt: string;
 	qa?: { fps: number };
 	toast?: { message: string; t: number };
@@ -55,12 +58,13 @@ type LabState = {
 	setDevice: (d: 'mobile'|'desktop') => void;
 	setBriefPrompt: (t: string) => void;
 	setExportSize: (w?: number, h?: number) => void;
+	setExportAudioUrl?: (u?: string) => void;
 	setPlayhead: (t: number) => void;
 	togglePlay: () => void;
 	buildStylePack: () => StylePack;
 	applyStylePack: (sp: StylePack) => void;
 	resetDefaults: () => void;
-	hydrateFrom: (p: Partial<Pick<LabState,'effect'|'timeline'|'text'|'device'|'exportSettings'|'play'>>) => void;
+	hydrateFrom: (p: Partial<Pick<LabState,'effect'|'timeline'|'text'|'device'|'exportSettings'|'play'|'clips'|'inpaint'>>) => void;
 	setNoiseOpacity: (v: number) => void;
 	setLutSrc?: (src?: string) => void;
 	showToast?: (message: string) => void;
@@ -74,6 +78,13 @@ type LabState = {
 	clearAgentTraces?: () => void;
 	addLutFavorite?: (url: string) => void;
 	removeLutFavorite?: (url: string) => void;
+	// inpaint selections
+	setInpaintEnabled?: (on: boolean) => void;
+	addInpaintRegion?: (r: InpaintSelection) => void;
+	removeInpaintRegion?: (idx: number) => void;
+	clearInpaintRegions?: () => void;
+	setInpaintFeather?: (px: number) => void;
+	setInpaintInvert?: (inv: boolean) => void;
 };
 
 export const useLabStore = create<LabState>((set, get) => ({
@@ -90,6 +101,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 	editCount: 0,
 	text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 }, font: 'Poppins' },
 	exportSettings: { bitrateKbps: 6000 },
+	inpaint: { enabled: false, regions: [], featherPx: 8, invert: false },
 	briefPrompt: 'warm retro print, soft grain',
 	timelineEasing: 'linear',
 	setEffectParam: (k, v) => set((s) => {
@@ -164,12 +176,13 @@ export const useLabStore = create<LabState>((set, get) => ({
 	setDevice: (d) => set(() => ({ device: d })),
 	setBriefPrompt: (t) => set(() => ({ briefPrompt: t })),
 	setExportSize: (w, h) => set(() => ({ exportSettings: { ...get().exportSettings, width: w, height: h } })),
+	setExportAudioUrl: (u) => set(() => ({ exportSettings: { ...get().exportSettings, audioUrl: u } })),
 	setPlayhead: (t) => set(() => ({ play: { ...get().play, t: Math.max(0, Math.min(1, t)) } })),
 	togglePlay: () => set(() => ({ play: { ...get().play, playing: !get().play.playing } })),
 	buildStylePack: () => { const s = get(); return { palette: ['#6E00FF', '#A83CF0', '#FF4BB5'], blocks: [s.effect.id], params: s.effect.params, timeline: s.timeline.keyframes }; },
 	applyStylePack: (sp) => set(() => ({ effect: { id: sp.blocks[0] || 'halftone', params: sp.params, mix: 0 }, timeline: { keyframes: sp.timeline } })),
-	resetDefaults: () => set(() => ({ effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0, bloomStrength: 0.25, lutAmount: 0.2, bloomThreshold: 0.7, grainAmount: 0.05, vignette01: 1 }, mix: 0 }, timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] }, play: { t: 0, playing: true }, text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 }, font: 'Poppins' }, exportSettings: { bitrateKbps: 6000 } })),
-	hydrateFrom: (p) => set(() => ({ effect: p.effect ? { ...get().effect, ...p.effect } : get().effect, timeline: p.timeline ? { keyframes: p.timeline.keyframes } : get().timeline, text: p.text ? { ...get().text, ...p.text } : get().text, device: p.device ?? get().device, exportSettings: p.exportSettings ?? get().exportSettings, play: p.play ?? get().play })),
+	resetDefaults: () => set(() => ({ effect: { id: 'halftone', params: { dotScale: 8, angleRad: 0.6, contrast: 1.0, invert01: 0, bloomStrength: 0.25, lutAmount: 0.2, bloomThreshold: 0.7, grainAmount: 0.05, vignette01: 1 }, mix: 0 }, timeline: { keyframes: [{ t: 0.0, mix: 0 }, { t: 1.0, mix: 1 }] }, play: { t: 0, playing: true }, text: { enabled: false, value: 'ACE Lab', params: { amp: 6, freq: 10, speed: 2, outlinePx: 1 }, font: 'Poppins' }, exportSettings: { bitrateKbps: 6000 }, clips: [], inpaint: { enabled: false, regions: [], featherPx: 8, invert: false } })),
+	hydrateFrom: (p) => set(() => ({ effect: p.effect ? { ...get().effect, ...p.effect } : get().effect, timeline: p.timeline ? { keyframes: p.timeline.keyframes } : get().timeline, text: p.text ? { ...get().text, ...p.text } : get().text, device: p.device ?? get().device, exportSettings: p.exportSettings ?? get().exportSettings, play: p.play ?? get().play, clips: p.clips ?? get().clips, inpaint: p.inpaint ?? get().inpaint })),
 	setNoiseOpacity: (v) => { document.documentElement.style.setProperty('--noise-opacity', String(Math.max(0, Math.min(0.2, v)))); },
 	setLutSrc: (src) => set((s) => ({ assets: { ...(s.assets ?? {}), lutSrc: src, lutFavorites: s.assets?.lutFavorites } })),
 	showToast: (message: string) => { set({ toast: { message, t: Date.now() } }); setTimeout(() => { const cur = get().toast; if (cur && Date.now() - cur.t >= 1800) { set({ toast: undefined }); } }, 2000); },
@@ -184,6 +197,12 @@ export const useLabStore = create<LabState>((set, get) => ({
 	clearAgentTraces: () => set(() => ({ agentTraces: [] })),
 	addLutFavorite: (url: string) => set((s)=> ({ assets: { ...(s.assets||{}), lutSrc: s.assets?.lutSrc, lutFavorites: Array.from(new Set([...(s.assets?.lutFavorites||[]), url])) } })),
 	removeLutFavorite: (url: string) => set((s)=> ({ assets: { ...(s.assets||{}), lutSrc: s.assets?.lutSrc, lutFavorites: (s.assets?.lutFavorites||[]).filter(u=>u!==url) } })),
+	setInpaintEnabled: (on) => set((s)=> ({ inpaint: { ...(s.inpaint||{ regions: [], featherPx: 8, invert: false }), enabled: on } })),
+	addInpaintRegion: (r) => set((s)=> ({ inpaint: { ...(s.inpaint||{ enabled:false, featherPx:8, invert:false, regions:[] }), regions: [ ...((s.inpaint?.regions)||[]), r ] } })),
+	removeInpaintRegion: (idx) => set((s)=> ({ inpaint: { ...(s.inpaint||{ enabled:false, featherPx:8, invert:false, regions:[] }), regions: (s.inpaint?.regions||[]).filter((_,i)=>i!==idx) } })),
+	clearInpaintRegions: () => set((s)=> ({ inpaint: { ...(s.inpaint||{ enabled:false, featherPx:8, invert:false, regions:[] }), regions: [] } })),
+	setInpaintFeather: (px) => set((s)=> ({ inpaint: { ...(s.inpaint||{ enabled:false, regions:[], invert:false }), featherPx: Math.max(0, Math.min(64, Math.round(px))) } })),
+	setInpaintInvert: (inv) => set((s)=> ({ inpaint: { ...(s.inpaint||{ enabled:false, regions:[], featherPx:8 }), invert: !!inv } })),
 }));
 
 
