@@ -36,9 +36,11 @@ function App() {
 		const ctrl = new AbortController(); setAborter(ctrl); setExporting(true); setExportProgress(0)
 		const common = { bitrateKbps: exportSettings.bitrateKbps ?? 6000, onProgress: (p:number)=>setExportProgress(p), signal: ctrl.signal }
 		try {
-			if (!res.allowed && device === 'mobile') {
-				const fixed = res.fix ? res.fix() : { width: 1920, height: Math.round(1920 / canvas.width * canvas.height) }
-				blob = await captureScaledWebmFromCanvas(canvas, fixed.width, 3, common)
+			if (!res.allowed) {
+				// Auto-fix path: apply suggested width if available, otherwise fall back to 1920 preserving aspect
+				const fix = res.fix ? res.fix() : { width: 1920, height: Math.round(1920 / canvas.width * canvas.height) }
+				blob = await captureScaledWebmFromCanvas(canvas, fix.width, 3, common)
+				useLabStore.getState().showToast?.('Policy auto-fix applied for export')
 			} else {
 				blob = await captureCanvasWebm(canvas, 3, common)
 			}
