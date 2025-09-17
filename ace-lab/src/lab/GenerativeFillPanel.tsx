@@ -48,7 +48,8 @@ export default function GenerativeFillPanel(){
         const image_url = crop.toDataURL('image/png'); const mask_url = mask.toDataURL('image/png');
         let j: InpaintResponse;
         try {
-            j = await fetchJsonWithRetry<InpaintResponse>('http://localhost:8103/inpaint', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, image_url, mask_url }) }, { retries: 2, backoffMs: 500 });
+            const token = localStorage.getItem('ace-token');
+            j = await fetchJsonWithRetry<InpaintResponse>('http://localhost:8103/inpaint', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ prompt, image_url, mask_url }) }, { retries: 2, backoffMs: 500 });
             if (!j.patch_url) throw new Error('Invalid inpaint response');
         } catch (e) {
             useLabStore.getState().showToast?.('Inpaint failed');
