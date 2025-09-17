@@ -46,33 +46,33 @@ export default function GeneratePanel(){
         <div className="space-y-3">
             <div className="text-sm text-black/70">Device: {device} {lastMs!=null && <span className="text-black/50">· {lastMs} ms</span>}</div>
             <div className="flex gap-2 items-center">
-                <input className="input w-1/2" value={modelUrl} onChange={e=>setModelUrl(e.target.value)} placeholder="Model URL (.onnx)" />
-                <select className="input" value={pref} onChange={e=>setPref(e.target.value as any)}>
+                <input className="input w-1/2" aria-label="Model URL" title="Model URL (.onnx)" value={modelUrl} onChange={e=>setModelUrl(e.target.value)} placeholder="Model URL (.onnx)" />
+                <select className="input" aria-label="Device preference" title="Execution device" value={pref} onChange={e=>setPref(e.target.value as any)}>
                     <option value="auto">Auto</option>
                     <option value="webgpu">WebGPU</option>
                     <option value="wasm">WASM</option>
                 </select>
-                <button className="btn-compact" onClick={()=>{
+                <button className="btn-compact" aria-label="Use demo model" title="Use demo model" onClick={()=>{
                     setModelUrl('https://github.com/onnx/models/raw/main/vision/classification/squeezenet/model/squeezenet1.0-12.onnx');
                     setPref('auto');
                 }}>Use demo model</button>
                 {catalog.length>0 && (
-                    <select className="input" onChange={e=>{ const found = catalog.find(c=>c.url===e.target.value); if (found) setModelUrl(found.url); }}>
+                    <select className="input" aria-label="Local models" title="Local models" onChange={e=>{ const found = catalog.find(c=>c.url===e.target.value); if (found) setModelUrl(found.url); }}>
                         <option value="">Local models…</option>
                         {catalog.map((m)=> <option key={m.url} value={m.url}>{m.name}</option>)}
                     </select>
                 )}
             </div>
             <div className="flex gap-2 items-center">
-                <input className="flex-1 input" value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Prompt" onKeyDown={(e)=>{ if (e.key==='Enter' && !running) { onGenerate(); } }} />
-                <button className="btn-compact" disabled={running} onClick={onGenerate}>{running ? 'Generating…' : 'Generate'}</button>
-                {running && <button className="btn-compact" onClick={cancel}>Cancel</button>}
+                <input className="flex-1 input" aria-label="Prompt" title="Prompt" value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Prompt" onKeyDown={(e)=>{ if (e.key==='Enter' && !running) { onGenerate(); } }} />
+                <button className="btn-compact" aria-label="Generate" title="Generate" disabled={running} onClick={onGenerate}>{running ? 'Generating…' : 'Generate'}</button>
+                {running && <button className="btn-compact" aria-label="Cancel" title="Cancel" onClick={cancel}>Cancel</button>}
             </div>
             {error && <div className="text-red-600 text-sm">{error}</div>}
             {thumb && <div className="rounded border border-black/10 p-2 bg-white"><img src={thumb.toDataURL('image/png')} alt="thumb" className="max-w-full h-auto" /></div>}
             <div className="flex gap-2">
-                <button className="btn-primary" disabled={!thumb} onClick={onSendToCanvas}>Send to Canvas</button>
-                <button className="btn-compact" disabled={!thumb} onClick={onSendToTimeline}>Send to Timeline</button>
+                <button className="btn-primary" aria-label="Send to Canvas" title="Send to Canvas" disabled={!thumb} onClick={onSendToCanvas}>Send to Canvas</button>
+                <button className="btn-compact" aria-label="Send to Timeline" title="Send to Timeline" disabled={!thumb} onClick={onSendToTimeline}>Send to Timeline</button>
             </div>
         </div>
     );

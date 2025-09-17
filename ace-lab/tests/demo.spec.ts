@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('demo: generate → send to canvas → open motion', async ({ page }) => {
+test('demo: generate → send to canvas → motion → export', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('button', { name: 'Generate (WebGPU)' }).click();
     await page.getByRole('button', { name: 'Use demo model' }).click();
@@ -12,6 +12,7 @@ test('demo: generate → send to canvas → open motion', async ({ page }) => {
 
     await page.getByRole('button', { name: 'Motion' }).click();
     await expect(page.getByRole('button', { name: 'Animate' })).toBeVisible();
+    await page.getByRole('button', { name: 'Export video' }).click();
 });
 
 
