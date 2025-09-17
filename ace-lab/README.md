@@ -1,7 +1,5 @@
 # ACE Lab
 
-<p align="center"><img src="../ace-lab.gif" width="30%" alt="ACE Lab logo"></p>
-
 Agentic Creative Experience Lab for rapid visual look‑development. Real‑time WebGL canvas with agent assist, presets, policy checks, and export.
 
 <p align="center">
