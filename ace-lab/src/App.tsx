@@ -143,7 +143,11 @@ function App() {
 				</>
 			)}
 			{tab === 'Agents' && (
-				<div className="p-4">Agents view placeholder</div>
+				<div className="p-4 text-sm text-black/80 space-y-2">
+					<div className="ace-gradient-text text-base">Agents</div>
+					<p>Use the Co-pilot panel to run agents on demand. Keyboard: G opens Generate, M opens Motion, T opens Style Transfer. Press ? for help.</p>
+					<p>Recent agent traces appear in the Co-pilot panel’s Traces view.</p>
+				</div>
 			)}
 			{tab === 'Library' && (
 				<div className="p-4">Manage loaded media on the right</div>

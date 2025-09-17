@@ -16,7 +16,7 @@ export default function LibraryPanel(){
 		const f = e.target.files?.[0]; if (!f) return;
 		const reader = new FileReader();
 		reader.onload = () => {
-			try { const sp = JSON.parse(String(reader.result)); applyPack(sp); } catch {}
+			try { const sp = JSON.parse(String(reader.result)); applyPack(sp); } catch { useLabStore.getState().showToast?.('Invalid style pack'); }
 		};
 		reader.readAsText(f);
 	}
