@@ -21,7 +21,7 @@ export default function PresetsPanel(){
 	const setTextParam = useLabStore(s => s.setTextParam);
 	const toggleText = useLabStore(s => s.toggleText);
 	const effect = useLabStore(s => s.effect);
-	const setState = useLabStore.setState as (p: any) => void;
+const setPresets = useLabStore(s => s.setPresets!);
 	const showToast = useLabStore(s => s.showToast);
 	const [newName, setNewName] = useState('My ACE Preset');
 	const [useServer, setUseServer] = useState(false);
@@ -31,11 +31,11 @@ export default function PresetsPanel(){
 		import('./builtin.json').then(m => setBuiltin(m.default as any)).catch(()=>{});
 	}, []);
 
-	const grouped = builtin.reduce((acc, b) => { const c = categoryOf(b); (acc[c] ||= []).push(b); return acc; }, {} as Record<string, Builtin[]>);
+const grouped = builtin.reduce((acc, b) => { const c = categoryOf(b); (acc[c] ||= []).push(b); return acc; }, {} as Record<string, Builtin[]>);
 
 async function refreshFromServer(){
 	try {
-		const r = await fetch('http://localhost:4000/presets'); if (!r.ok) throw new Error('load failed'); const j = await r.json(); setState({ presets: j }); showToast?.('Loaded presets from server');
+		const r = await fetch('http://localhost:4000/presets'); if (!r.ok) throw new Error('load failed'); const j = await r.json(); setPresets(j); showToast?.('Loaded presets from server');
 	} catch {
 		showToast?.('Failed to load presets');
 	}
@@ -61,7 +61,7 @@ async function pushToServer(preset: { id: string; name: string; params: Record<s
 			const data = JSON.parse(txt);
 			if (!Array.isArray(data)) throw new Error('Invalid');
 			const cleaned = data.filter((p: any)=> p && typeof p.id==='string' && typeof p.name==='string' && typeof p.params==='object');
-			setState({ presets: cleaned });
+			setPresets(cleaned);
 		} catch { showToast?.('Invalid preset file'); }
 		finally { if (fileRef.current) fileRef.current.value = ''; }
 	}

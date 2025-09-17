@@ -10,11 +10,11 @@ function ease(t: number, mode: 'linear'|'easeIn'|'easeOut'|'easeInOut'){
 
 export default function TimelinePanel() {
 	const keyframes = useLabStore(s => s.timeline.keyframes);
-	const setTimeline = useLabStore.setState as (partial: any) => void;
+const setTimelineKeys = useLabStore(s => s.setTimelineKeyframes!);
     const clips = useLabStore(s => s.clips || []);
 	const addClip = useLabStore(s => s.addClip!);
 	const removeClip = useLabStore(s => s.removeClip!);
-	const reorderClips = useLabStore(s => s.reorderClips!);
+const reorderClips = useLabStore(s => s.reorderClips!);
 	const setClipDuration = useLabStore(s => s.setClipDuration!);
 	const play = useLabStore(s => s.play);
 	const setPlayhead = useLabStore(s => s.setPlayhead);
@@ -23,15 +23,15 @@ export default function TimelinePanel() {
 	const [dragIdx, setDragIdx] = useState<number|null>(null);
 	const baseSnap = Number(localStorage.getItem('ace.snapStep') || '0.05');
 	const easingMode = useLabStore(s => s.timelineEasing) || 'linear';
-	const setEasing = useLabStore(s => s.setTimelineEasing!);
+const setEasing = useLabStore(s => s.setTimelineEasing!);
 
 	function addKeyframeAt(clientX: number){
 		const bar = barRef.current; if (!bar) return;
 		const rect = bar.getBoundingClientRect();
 		let t = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
 		const step = baseSnap; t = Math.round(t/step)*step;
-		const next = [...keyframes, { t, mix: 1 }].sort((a,b)=>a.t-b.t);
-		setTimeline({ timeline: { keyframes: next } });
+    const next = [...keyframes, { t, mix: 1 }].sort((a,b)=>a.t-b.t);
+    setTimelineKeys(next);
 	}
 
 	function onDown(_e: React.MouseEvent, idx: number){
@@ -44,8 +44,8 @@ export default function TimelinePanel() {
 			// snapping: default from settings, Shift = finer 0.25x, Alt = coarse 2x
 			const step = ev.shiftKey ? baseSnap*0.25 : (ev.altKey ? baseSnap*2 : baseSnap);
 			t = Math.round(t / step) * step;
-			const next = keyframes.map((k, i) => i===idx ? { ...k, t } : k);
-			setTimeline({ timeline: { keyframes: next } });
+            const next = keyframes.map((k, i) => i===idx ? { ...k, t } : k);
+            setTimelineKeys(next);
 			setPlayhead(t);
 		}
 		function up(){ setDragIdx(null); window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up);} 

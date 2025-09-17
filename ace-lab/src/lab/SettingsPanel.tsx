@@ -4,9 +4,9 @@ import { useState } from 'react';
 export default function SettingsPanel(){
 	const exportSettings = useLabStore(s => s.exportSettings);
 	const setExportSize = useLabStore(s => s.setExportSize);
-	const setState = useLabStore.setState as (p: any) => void;
+const setBitrateKbps = useLabStore(s => s.setExportBitrate);
 	const [snap, setSnap] = useState<number>(() => Number(localStorage.getItem('ace.snapStep')||'0.05'));
-	function setBitrate(kbps: number){ setState({ exportSettings: { ...exportSettings, bitrateKbps: kbps } }); }
+function setBitrate(kbps: number){ setBitrateKbps?.(kbps); }
 	function applySnap(v: number){ const clamped = Math.max(0.005, Math.min(0.5, v)); setSnap(clamped); localStorage.setItem('ace.snapStep', String(clamped)); }
 	function preset(size: '1080p'|'square'){
 		if (size === '1080p') setExportSize(1920, 1080);
@@ -51,7 +51,7 @@ export default function SettingsPanel(){
 			</div>
 			<label className="block text-sm">
 				<div className="flex justify-between"><span className="text-black/70">Audio Volume</span><span className="text-black/60">{Math.round((exportSettings.audioVolume ?? 1)*100)}%</span></div>
-				<input type="range" min={0} max={1} step={0.01} value={exportSettings.audioVolume ?? 1} onChange={(e)=> setState({ exportSettings: { ...exportSettings, audioVolume: Number(e.target.value) } })} />
+				<input type="range" min={0} max={1} step={0.01} value={exportSettings.audioVolume ?? 1} onChange={(e)=> useLabStore.getState().setExportAudioVolume?.(Number(e.target.value))} />
 			</label>
 		</div>
 	);
