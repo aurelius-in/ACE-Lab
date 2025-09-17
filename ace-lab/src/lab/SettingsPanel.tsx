@@ -8,6 +8,10 @@ export default function SettingsPanel(){
 	const [snap, setSnap] = useState<number>(() => Number(localStorage.getItem('ace.snapStep')||'0.05'));
 	function setBitrate(kbps: number){ setState({ exportSettings: { ...exportSettings, bitrateKbps: kbps } }); }
 	function applySnap(v: number){ const clamped = Math.max(0.005, Math.min(0.5, v)); setSnap(clamped); localStorage.setItem('ace.snapStep', String(clamped)); }
+	function preset(size: '1080p'|'square'){
+		if (size === '1080p') setExportSize(1920, 1080);
+		if (size === 'square') setExportSize(1080, 1080);
+	}
 	return (
 		<div className="space-y-4 bg-white text-black rounded-lg p-3">
 			<h3 className="text-sm">Settings</h3>
@@ -20,6 +24,11 @@ export default function SettingsPanel(){
 					<div className="flex justify-between"><span className="text-black/70">Snap step</span><span className="text-black/60">{snap}</span></div>
 					<input type="range" min={0.005} max={0.2} step={0.005} value={snap} onChange={(e)=>applySnap(Number(e.target.value))} />
 				</label>
+			</div>
+			<div className="flex items-center gap-2 text-sm">
+				<span className="text-black/70">Presets:</span>
+				<button className="btn-compact" onClick={()=>preset('1080p')}>1080p@24</button>
+				<button className="btn-compact" onClick={()=>preset('square')}>Square@30</button>
 			</div>
 			<div className="grid grid-cols-2 gap-3">
 				<label className="block text-sm">
